@@ -1,8 +1,12 @@
 {
   "name": "@leadertechie/personal-site-kit",
-  "version": "0.1.0-alpha.0",
+  "version": "0.0.0",
   "type": "module",
   "description": "A high-performance personal website engine for Cloudflare Workers and R2",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/leadertechie/personal-site-kit"
+  },
   "author": "Techie Leader",
   "license": "MIT",
   "files": [

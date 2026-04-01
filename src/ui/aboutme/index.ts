@@ -2,7 +2,7 @@ import { LitElement, html, css } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 
 import { ContentNode } from '@leadertechie/md2html';
-import { Profile } from '@techieleader/content';
+import { Profile } from './api';
 
 import { aboutmeStyles } from './styles';
 

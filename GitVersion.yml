@@ -1,11 +1,7 @@
-mode: ContinuousDeployment
-next-version: 0.1.0
+next-version: 0.0.1
+mode: Mainline
 branches:
   main:
-    regex: ^master$|^main$
-    tag: alpha
+    regex: ^main$
     increment: Patch
-    track-merge-target: false
-    tracks-release-branches: false
-    is-release-branch: false
-    is-mainline: true
+    tag: alpha

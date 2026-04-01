@@ -25,7 +25,13 @@ export default defineConfig({
     outDir: 'dist',
     minify: false
   },
-  plugins: [dts({ insertTypesEntry: true })],
+  plugins: [
+    dts({
+      insertTypesEntry: true,
+      include: ['src'],
+      exclude: ['src/**/*.test.ts', 'src/**/__tests__/**']
+    })
+  ],
   resolve: {
     alias: {
       '@': path.resolve(__dirname, 'src')

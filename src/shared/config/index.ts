@@ -9,6 +9,7 @@ const DEFAULT_INFRA: InfrastructureConfig = {
 
 const DEFAULT_STATIC: StaticDetails = {
   siteTitle: 'My Personal Website',
+  siteDescription: 'My Personal Website',
   copyright: '2026 My Personal Website',
   linkedin: 'https://linkedin.com/in/yourname',
   github: 'https://github.com/yourname',
