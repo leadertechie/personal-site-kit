@@ -1,0 +1,41 @@
+{
+  "name": "@leadertechie/personal-site-kit",
+  "version": "0.1.0-alpha.0",
+  "type": "module",
+  "description": "A high-performance personal website engine for Cloudflare Workers and R2",
+  "author": "Techie Leader",
+  "license": "MIT",
+  "files": [
+    "dist",
+    "src",
+    "README.md"
+  ],
+  "exports": {
+    ".": "./dist/index.js",
+    "./shared": "./dist/shared/index.js",
+    "./ui": "./dist/ui/index.js",
+    "./api": "./dist/api/index.js",
+    "./prerender": "./dist/prerender/index.js",
+    "./styles/*": "./src/styles/*"
+  },
+  "scripts": {
+    "build": "vite build",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@leadertechie/md2html": "^0.1.0-alpha.10",
+    "@leadertechie/r2tohtml": "^0.1.0-alpha.10",
+    "lit": "^3.2.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "jsdom": "^29.0.1",
+    "typescript": "^5.7.3",
+    "vite": "^7.3.0",
+    "vite-plugin-dts": "^4.5.4",
+    "vitest": "^4.0.16"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

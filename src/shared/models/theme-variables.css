@@ -1,0 +1,25 @@
+:root {
+  /* Light Theme Variables */
+  --text-color: #213547;
+  --background-color: #ffffff;
+  --link-color: #646cff;
+  --link-hover-color: #747bff;
+  --nav-link-color: #007bff;
+  --nav-link-hover-bg: #e2e6ea;
+  --footer-bg: #fff;
+  --footer-color: #222;
+  --footer-border: #eee;
+}
+
+/* Dark Theme Variables */
+html[data-theme='dark'] {
+  --text-color: rgba(255, 255, 255, 0.87);
+  --background-color: #242424;
+  --link-color: #646cff;
+  --link-hover-color: #535bf2;
+  --nav-link-color: #007bff; /* Can be adjusted for better contrast in dark mode */
+  --nav-link-hover-bg: #4a4a4a;
+  --footer-bg: #222;
+  --footer-color: #fff;
+  --footer-border: #444;
+}

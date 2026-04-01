@@ -1,0 +1,432 @@
+/* Theme Variables - Global */
+:root {
+  --text-color: #333;
+  --background-color: #fff;
+  --link-color: #0066cc;
+  --link-hover-color: #004d99;
+  --nav-link-color: #333;
+  --nav-link-hover-bg: #f0f0f0;
+  --border-color: #eee;
+  --card-bg: #fff;
+  --secondary-text: #666;
+  
+  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  color-scheme: light dark;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+[data-theme='dark'] {
+  --text-color: rgba(255, 255, 255, 0.87);
+  --background-color: #242424;
+  --link-color: #646cff;
+  --link-hover-color: #747bff;
+  --nav-link-color: rgba(255, 255, 255, 0.87);
+  --nav-link-hover-bg: #333;
+  --border-color: #444;
+  --card-bg: #1a1a1a;
+  --secondary-text: #aaa;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  color: var(--text-color);
+  background-color: var(--background-color);
+  min-width: 320px;
+}
+
+#app {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0;
+  text-align: center;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+main {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  width: 100%;
+  padding: 1rem;
+}
+
+@media (max-width: 768px) {
+  main {
+    padding: 0.75rem;
+  }
+}
+
+.page-title {
+  font-size: 3.2em;
+  line-height: 1.1;
+  margin: 0 0 1rem 0;
+  font-weight: 600;
+}
+
+.page-subtitle {
+  font-size: 1.5em;
+  line-height: 1.3;
+  margin: 0 0 0.75rem 0;
+}
+
+.content a,
+.page-content a {
+  font-weight: 500;
+  color: var(--link-color);
+  text-decoration: inherit;
+  transition: color 0.2s ease;
+}
+.content a:hover,
+.page-content a:hover {
+  color: var(--link-hover-color);
+}
+
+.nav-link {
+  color: var(--nav-link-color);
+  text-decoration: none;
+  padding: 0.5rem 1rem;
+  border-radius: 5px;
+  transition: background-color 0.3s ease;
+  display: inline-block;
+}
+
+.nav-link:hover {
+  background-color: var(--nav-link-hover-bg);
+  text-decoration: none;
+}
+
+.container {
+  padding: 2rem;
+  margin: 0 auto;
+  min-height: 60vh;
+  width: 100%;
+}
+
+.container-narrow {
+  max-width: 700px;
+}
+
+.container-medium {
+  max-width: 900px;
+}
+
+.container-wide {
+  max-width: 1200px;
+}
+
+.column-layout {
+  display: flex;
+  gap: 2rem;
+  flex-wrap: wrap;
+  width: 100%;
+}
+
+.row-layout {
+  flex-direction: row;
+  align-items: flex-start;
+}
+
+.main-column { flex: 2; min-width: 300px; }
+.sidebar-column { flex: 1; min-width: 250px; }
+.wide-main-column { flex: 3; min-width: 300px; }
+
+.text-center { text-align: center; }
+.text-left { text-align: left; }
+
+.mt-1 { margin-top: 10px; }
+.mt-2 { margin-top: 2rem; }
+.mb-1 { margin-bottom: 1rem; }
+.mb-15 { margin-bottom: 1.5rem; }
+.mb-2 { margin-bottom: 2rem; }
+.pb-05 { padding-bottom: 0.5rem; }
+
+.search-input {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 20px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  background: var(--background-color);
+  color: var(--text-color);
+  box-sizing: border-box;
+}
+
+.search-input-lg {
+  padding: 0.8rem;
+}
+
+.border-bottom {
+  border-bottom: 1px solid var(--border-color, #eee);
+}
+
+.hidden {
+  display: none !important;
+}
+
+/* Markdown Content Styles - Flat heading classes from md2html */
+.md-h1, .h1 { font-size: 2.5rem; margin: 0 0 1rem 0; font-weight: 600; line-height: 1.2; }
+.md-h2, .h2 { font-size: 2rem; margin: 0 0 0.875rem 0; font-weight: 600; line-height: 1.25; }
+.md-h3, .h3 { font-size: 1.5rem; margin: 0 0 0.75rem 0; font-weight: 600; line-height: 1.3; }
+.md-h4, .h4 { font-size: 1.25rem; margin: 0 0 0.5rem 0; font-weight: 600; line-height: 1.35; }
+.md-h5, .h5, .md-h6, .h6 { font-size: 1rem; margin: 0 0 0.5rem 0; font-weight: 600; }
+
+.md-paragraph {
+  margin: 0 0 1rem 0;
+  line-height: 1.7;
+  color: var(--text-color, #213547);
+}
+
+.md-list {
+  margin: 0 0 1rem 0;
+  padding-left: 1.5rem;
+}
+
+.md-list-item {
+  margin-bottom: 0.5rem;
+  line-height: 1.6;
+}
+
+.md-blockquote {
+  margin: 1rem 0;
+  padding: 0.75rem 1rem;
+  border-left: 4px solid var(--link-color, #646cff);
+  background: var(--nav-link-hover-bg, #f8f9fa);
+  border-radius: 0 8px 8px 0;
+  color: var(--secondary-text, #666);
+}
+
+.md-blockquote .md-paragraph {
+  margin: 0;
+}
+
+.md-code {
+  font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', monospace;
+  font-size: 0.9em;
+  background: var(--nav-link-hover-bg, #f5f5f5);
+  padding: 0.2rem 0.4rem;
+  border-radius: 4px;
+}
+
+.md-image {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+  margin: 1rem 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.md-container {
+  margin: 1rem 0;
+}
+
+.md-container hr {
+  border: none;
+  height: 2px;
+  background: var(--border-color, #eee);
+  margin: 2rem 0;
+  border-radius: 1px;
+}
+
+.md-container[tag="hr"] {
+  margin: 2rem 0;
+}
+
+.md-paragraph a,
+.md-list-item a {
+  color: var(--link-color, #646cff);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.md-paragraph a:hover,
+.md-list-item a:hover {
+  color: var(--link-hover-color, #535bf2);
+  text-decoration: underline;
+}
+
+.md-paragraph strong,
+.md-list-item strong {
+  font-weight: 600;
+  color: var(--text-color, #1a1a1a);
+}
+
+.md-paragraph em,
+.md-list-item em {
+  font-style: italic;
+}
+
+.md-container table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1rem 0;
+}
+
+.md-container th,
+.md-container td {
+  padding: 0.75rem;
+  border: 1px solid var(--border-color, #ddd);
+  text-align: left;
+}
+
+.md-container th {
+  background: var(--nav-link-hover-bg, #f5f5f5);
+  font-weight: 600;
+}
+
+html[data-theme="dark"] .md-code {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+html[data-theme="dark"] .md-container th {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+/* Gist Card */
+.gist-card {
+  margin-bottom: 1.5rem;
+  text-align: left;
+}
+
+.gist-card a {
+  color: var(--link-color);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.gist-card a:hover {
+  color: var(--link-hover-color);
+}
+
+.gist-card h4 {
+  margin: 0 0 0.25rem 0;
+  font-size: 1rem;
+}
+
+.gist-card p {
+  font-size: 0.9rem;
+  margin-bottom: 0.25rem;
+}
+
+.gist-card small {
+  color: var(--secondary-text, #666);
+}
+
+/* Sidebar */
+.sidebar-nav {
+  max-height: 80vh;
+  overflow-y: auto;
+  border-right: 1px solid var(--border-color);
+  padding-right: 1rem;
+}
+
+.sidebar-item {
+  padding: 0.75rem;
+  border-bottom: 1px solid var(--border-color);
+  border-radius: 4px;
+  margin-bottom: 0.5rem;
+  text-decoration: none;
+  color: inherit;
+  display: block;
+}
+
+.sidebar-item:hover {
+  background: var(--nav-link-hover-bg);
+}
+
+.sidebar-item.active {
+  background: var(--nav-link-hover-bg);
+  border-left: 4px solid var(--link-color);
+}
+
+.sidebar-item-link {
+  padding: 0;
+  border: none;
+  margin: 0;
+  width: 100%;
+  color: inherit;
+  display: block;
+}
+
+.sidebar-item-link:hover {
+  background: transparent;
+}
+
+.sidebar-item-link h4 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+/* Banner Component - now handled by banner.css */
+
+/* Footer Component - external styles for Shadow DOM penetration */
+my-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 2rem;
+  background: var(--background-color);
+  color: var(--text-color);
+  border-top: 1px solid var(--nav-link-hover-bg);
+  flex-wrap: wrap;
+}
+
+my-footer .footer-content {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+my-footer .links {
+  display: flex;
+  gap: 1rem;
+  margin-top: 0.5rem;
+}
+
+my-footer .links a {
+  color: inherit;
+  text-decoration: none;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  transition: background-color 0.3s ease;
+}
+
+my-footer .links a:hover {
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+@media (min-width: 768px) {
+  my-footer .footer-content {
+    flex-direction: row;
+    align-items: center;
+    width: 100%;
+    justify-content: space-between;
+  }
+  my-footer .links {
+    margin-top: 0;
+  }
+}
