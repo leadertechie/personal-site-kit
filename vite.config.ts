@@ -6,9 +6,9 @@ export default defineConfig({
   build: {
     lib: {
       entry: {
-        index: path.resolve(__dirname, 'src/shared/index.ts'),
+        index: path.resolve(__dirname, 'src/index.ts'),
         shared: path.resolve(__dirname, 'src/shared/index.ts'),
-        ui: path.resolve(__dirname, 'src/ui/admin/index.ts'), // UI entry will need consolidation later
+        ui: path.resolve(__dirname, 'src/ui/index.ts'),
         api: path.resolve(__dirname, 'src/api/index.ts'),
         prerender: path.resolve(__dirname, 'src/prerender/index.ts')
       },
@@ -25,13 +25,7 @@ export default defineConfig({
     outDir: 'dist',
     minify: false
   },
-  plugins: [
-    dts({
-      insertTypesEntry: true,
-      include: ['src'],
-      exclude: ['src/**/*.test.ts', 'src/**/__tests__/**']
-    })
-  ],
+  plugins: [dts({ insertTypesEntry: true })],
   resolve: {
     alias: {
       '@': path.resolve(__dirname, 'src')

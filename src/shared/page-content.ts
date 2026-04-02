@@ -1,5 +1,6 @@
-import { IFooterLink } from './interfaces/iFooterLink';
-import { IRoute } from './interfaces/iRoute';
+import { IFooterLink } from './interfaces/ifooter-link';
+import { IRoute } from './interfaces/iroute';
+export type { IFooterLink, IRoute };
 import { MarkdownPipeline } from '@leadertechie/md2html';
 
 export interface PageContent {
@@ -78,7 +79,7 @@ export const generatePageContent = (
   const footerTemplate = `
     <my-footer
       copyright="${copyright}"
-      footerlinks=\\'\${JSON.stringify(footerLinks)}\\'\'>
+      footerlinks='\${JSON.stringify(footerLinks)}'>
     </my-footer>`;
 
   const renderContentGists = (items: ContentMetadata[] = [], title: string, type: 'blogs' | 'stories') => {
@@ -194,7 +195,7 @@ export const generatePageContent = (
     ${bannerTemplate}
     <main class="container container-narrow text-center page-content">
         <h1 class="page-title">Page Not Found</h1>
-        <p>The page you\\'re looking for doesn\\'t exist.</p>
+        <p>The page you're looking for doesn't exist.</p>
         <p><a href="/">Return to home</a></p>
       </main>
       ${footerTemplate}`;

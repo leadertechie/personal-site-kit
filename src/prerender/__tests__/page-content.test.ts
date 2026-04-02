@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { generatePageContent } from '../pageContent';
+import { generatePageContent } from '../page-content';
 
 describe('generatePageContent', () => {
   const mockRoutes = [
