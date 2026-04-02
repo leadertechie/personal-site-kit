@@ -1,7 +1,7 @@
 import { LitElement, html, css } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
 
-import { IFooterLink } from '../../shared/interfaces/iFooterLink';
+import { IFooterLink } from '../../shared/interfaces/ifooter-link';
 
 import { footerStyles } from './styles';
 
