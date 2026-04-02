@@ -15,11 +15,26 @@
     "README.md"
   ],
   "exports": {
-    ".": "./dist/index.js",
-    "./shared": "./dist/shared/index.js",
-    "./ui": "./dist/ui/index.js",
-    "./api": "./dist/api/index.js",
-    "./prerender": "./dist/prerender/index.js",
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./shared": {
+      "types": "./dist/shared.d.ts",
+      "import": "./dist/shared.js"
+    },
+    "./ui": {
+      "types": "./dist/ui.d.ts",
+      "import": "./dist/ui.js"
+    },
+    "./api": {
+      "types": "./dist/api.d.ts",
+      "import": "./dist/api.js"
+    },
+    "./prerender": {
+      "types": "./dist/prerender.d.ts",
+      "import": "./dist/prerender.js"
+    },
     "./styles/*": "./src/styles/*"
   },
   "scripts": {
