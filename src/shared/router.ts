@@ -159,9 +159,18 @@ export class Router {
         fetch(`${this.apiUrl}/api/stories`),
         fetch(`${this.apiUrl}/api/home`)
       ]);
-      if (blogsRes.ok) blogs = (await blogsRes.json()).slice(0, 3);
-      if (storiesRes.ok) stories = (await storiesRes.json()).slice(0, 3);
-      if (homeRes.ok) homeContent = (await homeRes.json()).content;
+      if (blogsRes.ok) {
+        const data = await blogsRes.json().catch(() => []);
+        blogs = Array.isArray(data) ? data.slice(0, 3) : [];
+      }
+      if (storiesRes.ok) {
+        const data = await storiesRes.json().catch(() => []);
+        stories = Array.isArray(data) ? data.slice(0, 3) : [];
+      }
+      if (homeRes.ok) {
+        const data = await homeRes.json().catch(() => ({}));
+        homeContent = data.content || '';
+      }
     } catch (e) {
       console.error('Failed to fetch home content', e);
     }

@@ -20,7 +20,7 @@ export class FooterComponent extends LitElement {
       <div class="footer-content">
         <span>&copy; ${this.copyright}</span>
         <span class="links">
-          ${this.footerLinks.map(
+          ${(this.footerLinks || []).map(
             (link) => {
               const isExternal = link.link.startsWith('http') || link.link.startsWith('mailto:');
               return html`<a 
