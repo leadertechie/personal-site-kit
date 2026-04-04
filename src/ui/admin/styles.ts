@@ -105,13 +105,6 @@ export const adminStyles = css`
   gap: 0.5rem;
 }
 
-.section h4 {
-  margin: 1.5rem 0 0.75rem 0;
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--text-color, #213547);
-}
-
 .file-list {
   margin-top: 20px;
 }
@@ -216,46 +209,6 @@ input[type="file"]:hover {
   font-size: 0.9rem;
   margin-bottom: 16px;
   line-height: 1.5;
-}
-
-.required-badge {
-  background: linear-gradient(135deg, #dc3545, #c82333);
-  color: white;
-  padding: 4px 10px;
-  border-radius: 20px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  margin-left: 8px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.current-file {
-  background: linear-gradient(135deg, #e8f5e9, #c8e6c9);
-  color: #2e7d32;
-  padding: 14px 16px;
-  border-radius: 10px;
-  margin-bottom: 16px;
-  border: 1px solid #a5d6a7;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-
-.current-file strong {
-  color: #1b5e20;
-}
-
-.info-box {
-  background: linear-gradient(135deg, #fff8e1, #ffecb3);
-  color: #f57c00;
-  padding: 14px 16px;
-  border-radius: 10px;
-  margin-bottom: 16px;
-  font-size: 0.9rem;
-  border: 1px solid #ffe082;
 }
 
 .status-message {

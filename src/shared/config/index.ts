@@ -26,7 +26,7 @@ export async function initializeConfig(infra?: Partial<InfrastructureConfig>): P
   try {
     const res = await fetch(`${activeConfig.apiUrl}/api/static`);
     if (res.ok) {
-      const remoteStatic = await res.json();
+      const remoteStatic = await res.json().catch(() => ({}));
       activeConfig = { ...activeConfig, ...remoteStatic };
     }
   } catch (e) {
