@@ -10,18 +10,25 @@ import {
   MAX_ATTEMPTS
 } from './auth';
 
-function createSessionCookie(token: string, secure: boolean): string {
+function createSessionCookie(token: string, origin: string): string {
   const expires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toUTCString();
-  const SameSite = secure ? 'Strict' : 'Lax';
-  return `session=${token}; HttpOnly; Secure; SameSite=${SameSite}; Path=/; Expires=${expires}`;
+  const isSecure = origin.startsWith('https://');
+  const hostname = new URL(origin).hostname;
+  const SameSite = isSecure ? 'Strict' : 'Lax';
+  
+  let cookie = `session=${token}; HttpOnly; SameSite=${SameSite}; Path=/; Expires=${expires}`;
+  if (isSecure) {
+    cookie += '; Secure';
+  }
+  cookie += `; Domain=${hostname}`;
+  return cookie;
 }
 
 export async function handleAuth(request: Request, env: any, subpath: string): Promise<Response> {
   const method = request.method;
   const clientIP = getClientIP(request);
   const path = subpath.replace(/^\//, '').split('/')[0];
-  const url = new URL(request.url);
-  const isSecure = url.protocol === 'https:';
+  const origin = request.headers.get('Origin') || new URL(request.url).origin;
 
   // Check rate limit for login attempts
   const rateCheck = await checkRateLimit(env, clientIP);
@@ -40,11 +47,11 @@ export async function handleAuth(request: Request, env: any, subpath: string): P
 
   switch (path) {
     case 'setup':
-      return handleSetup(request, env, clientIP, isSecure);
+      return handleSetup(request, env, clientIP, origin);
     case 'status':
       return handleStatus(env);
     case 'login':
-      return handleLogin(request, env, clientIP, isSecure);
+      return handleLogin(request, env, clientIP, origin);
     case 'logout':
       return handleLogout(request, env);
     default:
@@ -52,7 +59,7 @@ export async function handleAuth(request: Request, env: any, subpath: string): P
   }
 }
 
-async function handleSetup(request: Request, env: any, clientIP: string, isSecure: boolean): Promise<Response> {
+async function handleSetup(request: Request, env: any, clientIP: string, origin: string): Promise<Response> {
   if (request.method !== 'POST') {
     return createErrorResponse('Method not allowed', 405);
   }
@@ -85,7 +92,7 @@ async function handleSetup(request: Request, env: any, clientIP: string, isSecur
 
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
-      'Set-Cookie': createSessionCookie(token, isSecure)
+      'Set-Cookie': createSessionCookie(token, origin)
     };
 
     return new Response(JSON.stringify({ 
@@ -109,7 +116,7 @@ async function handleStatus(env: any): Promise<Response> {
   });
 }
 
-async function handleLogin(request: Request, env: any, clientIP: string, isSecure: boolean): Promise<Response> {
+async function handleLogin(request: Request, env: any, clientIP: string, origin: string): Promise<Response> {
   if (request.method !== 'POST') {
     return createErrorResponse('Method not allowed', 405);
   }
@@ -138,7 +145,7 @@ async function handleLogin(request: Request, env: any, clientIP: string, isSecur
 
       const headers: Record<string, string> = {
         'Content-Type': 'application/json',
-        'Set-Cookie': createSessionCookie(token, isSecure)
+        'Set-Cookie': createSessionCookie(token, origin)
       };
 
       return new Response(JSON.stringify({ 
@@ -162,6 +169,7 @@ async function handleLogout(request: Request, env: any): Promise<Response> {
     return createErrorResponse('Method not allowed', 405);
   }
 
+  const origin = request.headers.get('Origin') || new URL(request.url).origin;
   const cookieHeader = request.headers.get('Cookie');
   const sessionToken = cookieHeader?.split(';')
     .find(c => c.trim().startsWith('session='))
@@ -171,11 +179,16 @@ async function handleLogout(request: Request, env: any): Promise<Response> {
     await env.KV.delete(`session:${sessionToken}`);
   }
 
+  const hostname = new URL(origin).hostname;
+  const isSecure = origin.startsWith('https://');
+  const SameSite = isSecure ? 'Strict' : 'Lax';
+  const logoutCookie = `session=; HttpOnly; SameSite=${SameSite}; Path=/; Max-Age=0; Domain=${hostname}${isSecure ? '; Secure' : ''}`;
+
   return new Response(JSON.stringify({ success: true, message: 'Logged out' }), {
     status: 200,
     headers: {
       'Content-Type': 'application/json',
-      'Set-Cookie': 'session=; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=0'
+      'Set-Cookie': logoutCookie
     }
   });
 }
