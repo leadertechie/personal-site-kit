@@ -3,9 +3,11 @@ import { handleAboutMe, clearContentCache } from './handlers/about-me';
 import { handleHome } from './handlers/home';
 import { handleInfo } from './handlers/info';
 import { handleContent } from './handlers/content';
+import { handleAuth } from './handlers/auth-handler';
 import { handleBlogs, handleStories, handleSearch } from './handlers/content-api';
 import { handleLogo } from './handlers/logo';
 import { handleStaticDetails } from './handlers/static-details';
+import { getAuthStore } from './handlers/auth';
 
 export type APIHandler = (request: Request, env: any) => Promise<Response>;
 
@@ -19,7 +21,7 @@ export class WebsiteAPI {
   private addCORSHeaders(response: Response): Response {
     response.headers.set('Access-Control-Allow-Origin', '*' );
     response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS' );
-    response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Session-Token');
     return response;
   }
 
@@ -29,22 +31,10 @@ export class WebsiteAPI {
       headers: {
         'Access-Control-Allow-Origin': '*' ,
         'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS' ,
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Session-Token',
         'Access-Control-Max-Age': '86400',
       },
     });
-  }
-
-  private requireAuth(request: Request, env?: any): Response | null {
-    const authHeader = request.headers.get('Authorization');
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return createErrorResponse('Unauthorized', 401);
-    }
-    const token = authHeader.slice(7);
-    if (token !== env?.ADMIN_API_KEY) {
-      return createErrorResponse('Unauthorized', 401);
-    }
-    return null;
   }
 
   public async fetch(request: Request, env: any): Promise<Response> {
@@ -79,8 +69,11 @@ export class WebsiteAPI {
         case 'home':
           return this.addCORSHeaders(await handleHome(env));
         case 'cache-clear':
-          const authError = this.requireAuth(request, env);
-          if (authError) return this.addCORSHeaders(authError);
+          const sessionToken = request.headers.get('X-Session-Token');
+          const session = sessionToken ? await env.KV.get(`session:${sessionToken}`, 'json') : null;
+          if (!session || session.expiresAt < Date.now()) {
+            return this.addCORSHeaders(createErrorResponse('Unauthorized', 401));
+          }
           clearContentCache();
           return this.addCORSHeaders(new Response(JSON.stringify({ success: true, message: 'Cache cleared' }), { status: 200 }));
         case 'aboutme':
@@ -89,6 +82,8 @@ export class WebsiteAPI {
           return this.addCORSHeaders(await handleLogo(env));
         case 'static':
           return this.addCORSHeaders(await handleStaticDetails(env));
+        case 'auth':
+          return this.addCORSHeaders(await handleAuth(request, env, '/auth'));
         case 'blogs':
           return this.addCORSHeaders(await handleBlogs(env));
         case 'blogs/latest':
