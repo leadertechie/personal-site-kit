@@ -3,9 +3,11 @@ import { handleAboutMe, clearContentCache } from './handlers/about-me';
 import { handleHome } from './handlers/home';
 import { handleInfo } from './handlers/info';
 import { handleContent } from './handlers/content';
+import { handleAuth } from './handlers/auth-handler';
 import { handleBlogs, handleStories, handleSearch } from './handlers/content-api';
 import { handleLogo } from './handlers/logo';
 import { handleStaticDetails } from './handlers/static-details';
+import { getAuthStore } from './handlers/auth';
 
 export type APIHandler = (request: Request, env: any) => Promise<Response>;
 
@@ -23,6 +25,14 @@ export class WebsiteAPI {
     return response;
   }
 
+  private addAdminCORSHeaders(response: Response): Response {
+    response.headers.set('Access-Control-Allow-Origin', 'same-origin');
+    response.headers.set('Access-Control-Allow-Credentials', 'true');
+    response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    return response;
+  }
+
   private handleCORS(): Response {
     return new Response(null, {
       status: 200,
@@ -33,18 +43,6 @@ export class WebsiteAPI {
         'Access-Control-Max-Age': '86400',
       },
     });
-  }
-
-  private requireAuth(request: Request, env?: any): Response | null {
-    const authHeader = request.headers.get('Authorization');
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return createErrorResponse('Unauthorized', 401);
-    }
-    const token = authHeader.slice(7);
-    if (token !== env?.ADMIN_API_KEY) {
-      return createErrorResponse('Unauthorized', 401);
-    }
-    return null;
   }
 
   public async fetch(request: Request, env: any): Promise<Response> {
@@ -70,7 +68,7 @@ export class WebsiteAPI {
       // Check for content route first (content/*)
       if (route === 'content' || route.startsWith('content/')) {
         const subpath = route.replace(/^content\/?/, '');
-        return this.addCORSHeaders(await handleContent(request, env, subpath));
+        return this.addAdminCORSHeaders(await handleContent(request, env, subpath));
       }
 
       switch (route) {
@@ -79,16 +77,24 @@ export class WebsiteAPI {
         case 'home':
           return this.addCORSHeaders(await handleHome(env));
         case 'cache-clear':
-          const authError = this.requireAuth(request, env);
-          if (authError) return this.addCORSHeaders(authError);
+          const cookieHeader = request.headers.get('Cookie');
+          const sessionToken = cookieHeader?.split(';')
+            .find(c => c.trim().startsWith('session='))
+            ?.split('=')[1];
+          const session = sessionToken ? await env.KV.get(`session:${sessionToken}`, 'json') : null;
+          if (!session || session.expiresAt < Date.now()) {
+            return this.addAdminCORSHeaders(createErrorResponse('Unauthorized', 401));
+          }
           clearContentCache();
-          return this.addCORSHeaders(new Response(JSON.stringify({ success: true, message: 'Cache cleared' }), { status: 200 }));
+          return this.addAdminCORSHeaders(new Response(JSON.stringify({ success: true, message: 'Cache cleared' }), { status: 200 }));
         case 'aboutme':
           return this.addCORSHeaders(await handleAboutMe(env));
         case 'logo':
           return this.addCORSHeaders(await handleLogo(env));
         case 'static':
           return this.addCORSHeaders(await handleStaticDetails(env));
+        case 'auth':
+          return this.addAdminCORSHeaders(await handleAuth(request, env, '/auth'));
         case 'blogs':
           return this.addCORSHeaders(await handleBlogs(env));
         case 'blogs/latest':
