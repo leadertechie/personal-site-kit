@@ -3,8 +3,6 @@ import { customElement, state } from 'lit/decorators.js';
 
 import { adminStyles } from './styles';
 
-console.log('[AdminPortal] Module loading');
-
 interface ContentItem {
   key: string;
   size: number;
@@ -19,17 +17,23 @@ interface StaticDetails {
   email?: string;
 }
 
-console.log('[AdminPortal] About to define custom element');
+interface AuthStatus {
+  configured: boolean;
+  username: string | null;
+}
 
 @customElement('admin-portal')
 export class AdminPortal extends LitElement {
   static styles = adminStyles;
 
   @state()
-  accessor apiKey = '';
+  accessor isAuthenticated = false;
 
   @state()
-  accessor isAuthenticated = false;
+  accessor isSetup = false;
+
+  @state()
+  accessor isLoading = true;
 
   @state()
   accessor contentList: ContentItem[] = [];
@@ -43,26 +47,157 @@ export class AdminPortal extends LitElement {
   @state()
   accessor staticDetails: StaticDetails = {};
 
+  @state()
+  accessor loginError = '';
+
   get apiUrl() {
     return (window as any).__VITE_API_URL__ || import.meta.env.VITE_API_URL || 'http://localhost:8787';
   }
 
-  handleLogin(e: Event) {
-    e.preventDefault();
-    const input = this.shadowRoot?.querySelector('#apiKey') as HTMLInputElement;
-    if (input.value) {
-      this.apiKey = input.value;
-      this.isAuthenticated = true;
-      this.fetchContent();
+  async connectedCallback() {
+    super.connectedCallback();
+    await this.checkAuthStatus();
+  }
+
+  async checkAuthStatus() {
+    try {
+      const res = await fetch(`${this.apiUrl}/auth/status`, {
+        credentials: 'include'
+      });
+      if (res.ok) {
+        const status: AuthStatus = await res.json();
+        this.isSetup = status.configured;
+        
+        if (status.configured) {
+          await this.tryAutoLogin();
+        } else {
+          this.isLoading = false;
+        }
+      } else {
+        this.isSetup = false;
+        this.isLoading = false;
+      }
+    } catch (e) {
+      this.isSetup = false;
+      this.isLoading = false;
     }
+  }
+
+  async tryAutoLogin() {
+    try {
+      const res = await fetch(`${this.apiUrl}/content`, {
+        credentials: 'include'
+      });
+      if (res.ok) {
+        this.contentList = await res.json();
+        this.isAuthenticated = true;
+      }
+    } catch (e) {}
+    this.isLoading = false;
+  }
+
+  async handleLogin(e: Event) {
+    e.preventDefault();
+    this.loginError = '';
+
+    const usernameInput = this.shadowRoot?.querySelector('#username') as HTMLInputElement;
+    const passwordInput = this.shadowRoot?.querySelector('#password') as HTMLInputElement;
+
+    if (!usernameInput?.value || !passwordInput?.value) {
+      this.loginError = 'Username and password required';
+      return;
+    }
+
+    try {
+      const res = await fetch(`${this.apiUrl}/auth/login`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username: usernameInput.value,
+          password: passwordInput.value
+        })
+      });
+
+      if (res.ok) {
+        this.isAuthenticated = true;
+        await this.fetchContent();
+      } else {
+        const data = await res.json();
+        this.loginError = data.error || 'Login failed';
+      }
+    } catch (e) {
+      this.loginError = 'Connection error';
+    }
+  }
+
+  async handleSetup(e: Event) {
+    e.preventDefault();
+    this.loginError = '';
+
+    const usernameInput = this.shadowRoot?.querySelector('#username') as HTMLInputElement;
+    const passwordInput = this.shadowRoot?.querySelector('#password') as HTMLInputElement;
+    const confirmInput = this.shadowRoot?.querySelector('#confirmPassword') as HTMLInputElement;
+
+    if (!usernameInput?.value || !passwordInput?.value) {
+      this.loginError = 'Username and password required';
+      return;
+    }
+
+    if (usernameInput.value.length < 3) {
+      this.loginError = 'Username must be at least 3 characters';
+      return;
+    }
+
+    if (passwordInput.value.length < 8) {
+      this.loginError = 'Password must be at least 8 characters';
+      return;
+    }
+
+    if (passwordInput.value !== confirmInput?.value) {
+      this.loginError = 'Passwords do not match';
+      return;
+    }
+
+    try {
+      const res = await fetch(`${this.apiUrl}/auth/setup`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username: usernameInput.value,
+          password: passwordInput.value
+        })
+      });
+
+      if (res.ok) {
+        this.isAuthenticated = true;
+        this.isSetup = true;
+        await this.fetchContent();
+      } else {
+        const data = await res.json();
+        this.loginError = data.error || 'Setup failed';
+      }
+    } catch (e) {
+      this.loginError = 'Connection error';
+    }
+  }
+
+  async handleLogout() {
+    try {
+      await fetch(`${this.apiUrl}/auth/logout`, {
+        method: 'POST',
+        credentials: 'include'
+      });
+    } catch (e) {}
+    this.isAuthenticated = false;
+    this.contentList = [];
   }
 
   async fetchContent() {
     try {
       const res = await fetch(`${this.apiUrl}/content`, {
-        headers: {
-          'Authorization': `Bearer ${this.apiKey}`
-        }
+        credentials: 'include'
       });
       if (res.ok) {
         this.contentList = await res.json();
@@ -76,13 +211,13 @@ export class AdminPortal extends LitElement {
 
   async fetchStaticDetails() {
     try {
-      const res = await fetch(`${this.apiUrl}/api/static`);
+      const res = await fetch(`${this.apiUrl}/static`, {
+        credentials: 'include'
+      });
       if (res.ok) {
         this.staticDetails = await res.json();
       }
-    } catch (e) {
-      // Ignore errors
-    }
+    } catch (e) {}
   }
 
   async handleUpload(key: string, file: File) {
@@ -90,9 +225,7 @@ export class AdminPortal extends LitElement {
       this.statusMessage = 'Uploading...';
       const res = await fetch(`${this.apiUrl}/content/${key}`, {
         method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${this.apiKey}`
-        },
+        credentials: 'include',
         body: file
       });
 
@@ -112,9 +245,7 @@ export class AdminPortal extends LitElement {
       this.statusMessage = 'Clearing cache...';
       const res = await fetch(`${this.apiUrl}/cache-clear`, {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${this.apiKey}`
-        }
+        credentials: 'include'
       });
 
       if (res.ok) {
@@ -133,9 +264,7 @@ export class AdminPortal extends LitElement {
     try {
       const res = await fetch(`${this.apiUrl}/content/${key}`, {
         method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${this.apiKey}`
-        }
+        credentials: 'include'
       });
 
       if (res.ok) {
@@ -154,6 +283,41 @@ export class AdminPortal extends LitElement {
 
   getSectionFiles(prefix: string): ContentItem[] {
     return this.contentList.filter(c => c.key.startsWith(prefix));
+  }
+
+  renderLoginForm() {
+    return html`
+      <div class="container">
+        <div class="login-box">
+          <h2>Admin Setup</h2>
+          <p>Create your admin credentials</p>
+          <form @submit=${this.handleSetup}>
+            <input type="text" id="username" placeholder="Username (3+ chars)" />
+            <input type="password" id="password" placeholder="Password (8+ chars)" />
+            <input type="password" id="confirmPassword" placeholder="Confirm Password" />
+            ${this.loginError ? html`<div class="error-message">${this.loginError}</div>` : ''}
+            <button type="submit" class="btn-primary">Create Account</button>
+          </form>
+        </div>
+      </div>
+    `;
+  }
+
+  renderLogin() {
+    return html`
+      <div class="container">
+        <div class="login-box">
+          <h2>Admin Login</h2>
+          <p>Enter your credentials</p>
+          <form @submit=${this.handleLogin}>
+            <input type="text" id="username" placeholder="Username" autocomplete="username" />
+            <input type="password" id="password" placeholder="Password" autocomplete="current-password" />
+            ${this.loginError ? html`<div class="error-message">${this.loginError}</div>` : ''}
+            <button type="submit" class="btn-primary">Login</button>
+          </form>
+        </div>
+      </div>
+    `;
   }
 
   renderHomeSection() {
@@ -361,69 +525,6 @@ export class AdminPortal extends LitElement {
     `;
   }
 
-  render() {
-    if (!this.isAuthenticated) {
-      return html`
-        <div class="container">
-          <div class="login-box">
-            <h2>Admin Login</h2>
-            <p>Enter your API key to manage content</p>
-            <form @submit=${this.handleLogin}>
-              <input type="password" id="apiKey" placeholder="API Key" />
-              <button type="submit" class="btn-primary">Login</button>
-            </form>
-          </div>
-        </div>
-      `;
-    }
-
-    return html`
-      <div class="container">
-        <div class="header">
-          <h1>Content Manager</h1>
-          <button class="btn-secondary" @click=${() => this.handleClearCache()}>Clear Cache</button>
-        </div>
-        
-        <div class="nav-tabs">
-          <button class="nav-tab ${this.activeSection === 'home' ? 'active' : ''}" 
-            @click=${() => this.activeSection = 'home'}>Home</button>
-          <button class="nav-tab ${this.activeSection === 'profile' ? 'active' : ''}" 
-            @click=${() => this.activeSection = 'profile'}>Profile</button>
-          <button class="nav-tab ${this.activeSection === 'aboutme' ? 'active' : ''}"
-            @click=${() => this.activeSection = 'aboutme'}>About Me</button>
-          <button class="nav-tab ${this.activeSection === 'blogs' ? 'active' : ''}"
-            @click=${() => this.activeSection = 'blogs'}>Blogs</button>
-          <button class="nav-tab ${this.activeSection === 'stories' ? 'active' : ''}"
-            @click=${() => this.activeSection = 'stories'}>Stories</button>
-          <button class="nav-tab ${this.activeSection === 'images' ? 'active' : ''}"
-            @click=${() => this.activeSection = 'images'}>Images</button>
-          <button class="nav-tab ${this.activeSection === 'logo' ? 'active' : ''}"
-            @click=${() => this.activeSection = 'logo'}>Logo</button>
-          <button class="nav-tab ${this.activeSection === 'static' ? 'active' : ''}"
-            @click=${() => { 
-              this.activeSection = 'static'; 
-              this.fetchStaticDetails(); 
-            }}>Site Settings</button>
-        </div>
-
-        ${this.statusMessage ? html`
-          <div class="status-message ${this.statusMessage.includes('successful') || this.statusMessage.includes('cleared') ? 'success' : this.statusMessage.includes('failed') || this.statusMessage.includes('Error') ? 'error' : ''}">
-            ${this.statusMessage}
-          </div>
-        ` : ''}
-
-        ${this.activeSection === 'home' ? this.renderHomeSection() : ''}
-        ${this.activeSection === 'profile' ? this.renderProfileSection() : ''}
-        ${this.activeSection === 'aboutme' ? this.renderAboutMeSection() : ''}
-        ${this.activeSection === 'blogs' ? this.renderBlogsSection() : ''}
-        ${this.activeSection === 'stories' ? this.renderStoriesSection() : ''}
-        ${this.activeSection === 'images' ? this.renderImagesSection() : ''}
-        ${this.activeSection === 'logo' ? this.renderLogoSection() : ''}
-        ${this.activeSection === 'static' ? this.renderStaticSection() : ''}
-      </div>
-    `;
-  }
-
   renderStaticSection() {
     return html`
       <div class="section">
@@ -473,7 +574,8 @@ export class AdminPortal extends LitElement {
             const url = `${this.apiUrl}/content/staticdetails.json`;
             const res = await fetch(url, {
               method: 'PUT',
-              headers: { 'Authorization': `Bearer ${this.apiKey}`, 'Content-Type': 'application/json' },
+              credentials: 'include',
+              headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify(data)
             });
             if (res.ok) {
@@ -486,6 +588,67 @@ export class AdminPortal extends LitElement {
             this.statusMessage = 'Error saving settings.';
           }
         }}>Save Settings</button>
+      </div>
+    `;
+  }
+
+  render() {
+    if (this.isLoading) {
+      return html`<div class="container"><div class="loading">Loading...</div></div>`;
+    }
+
+    if (!this.isSetup) {
+      return this.renderLoginForm();
+    }
+
+    if (!this.isAuthenticated) {
+      return this.renderLogin();
+    }
+
+    return html`
+      <div class="container">
+        <div class="header">
+          <h1>Content Manager</h1>
+          <button class="btn-secondary" @click=${() => this.handleLogout()}>Logout</button>
+          <button class="btn-secondary" @click=${() => this.handleClearCache()}>Clear Cache</button>
+        </div>
+        
+        <div class="nav-tabs">
+          <button class="nav-tab ${this.activeSection === 'home' ? 'active' : ''}" 
+            @click=${() => this.activeSection = 'home'}>Home</button>
+          <button class="nav-tab ${this.activeSection === 'profile' ? 'active' : ''}" 
+            @click=${() => this.activeSection = 'profile'}>Profile</button>
+          <button class="nav-tab ${this.activeSection === 'aboutme' ? 'active' : ''}"
+            @click=${() => this.activeSection = 'aboutme'}>About Me</button>
+          <button class="nav-tab ${this.activeSection === 'blogs' ? 'active' : ''}"
+            @click=${() => this.activeSection = 'blogs'}>Blogs</button>
+          <button class="nav-tab ${this.activeSection === 'stories' ? 'active' : ''}"
+            @click=${() => this.activeSection = 'stories'}>Stories</button>
+          <button class="nav-tab ${this.activeSection === 'images' ? 'active' : ''}"
+            @click=${() => this.activeSection = 'images'}>Images</button>
+          <button class="nav-tab ${this.activeSection === 'logo' ? 'active' : ''}"
+            @click=${() => this.activeSection = 'logo'}>Logo</button>
+          <button class="nav-tab ${this.activeSection === 'static' ? 'active' : ''}"
+            @click=${() => { 
+              this.activeSection = 'static'; 
+              this.fetchStaticDetails(); 
+            }}>Site Settings</button>
+        </div>
+
+        ${this.statusMessage ? html`
+          <div class="status-message ${this.statusMessage.includes('successful') || this.statusMessage.includes('cleared') ? 'success' : this.statusMessage.includes('failed') || this.statusMessage.includes('Error') ? 'error' : ''}">
+            ${this.statusMessage}
+          </div>
+        ` : ''}
+
+        ${this.activeSection === 'home' ? this.renderHomeSection() : ''}
+        ${this.activeSection === 'profile' ? this.renderProfileSection() : ''}
+        ${this.activeSection === 'aboutme' ? this.renderAboutMeSection() : ''}
+        ${this.activeSection === 'blogs' ? this.renderBlogsSection() : ''}
+        ${this.activeSection === 'stories' ? this.renderStoriesSection() : ''}
+        ${this.activeSection === 'images' ? this.renderImagesSection() : ''}
+        ${this.activeSection === 'logo' ? this.renderLogoSection() : ''}
+        ${this.activeSection === 'static' ? this.renderStaticSection() : ''}
       </div>
     `;
   }
