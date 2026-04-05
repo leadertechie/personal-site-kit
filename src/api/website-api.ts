@@ -21,7 +21,15 @@ export class WebsiteAPI {
   private addCORSHeaders(response: Response): Response {
     response.headers.set('Access-Control-Allow-Origin', '*' );
     response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS' );
-    response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Session-Token');
+    response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    return response;
+  }
+
+  private addAdminCORSHeaders(response: Response): Response {
+    response.headers.set('Access-Control-Allow-Origin', 'same-origin');
+    response.headers.set('Access-Control-Allow-Credentials', 'true');
+    response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
     return response;
   }
 
@@ -31,7 +39,7 @@ export class WebsiteAPI {
       headers: {
         'Access-Control-Allow-Origin': '*' ,
         'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS' ,
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Session-Token',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
         'Access-Control-Max-Age': '86400',
       },
     });
@@ -60,7 +68,7 @@ export class WebsiteAPI {
       // Check for content route first (content/*)
       if (route === 'content' || route.startsWith('content/')) {
         const subpath = route.replace(/^content\/?/, '');
-        return this.addCORSHeaders(await handleContent(request, env, subpath));
+        return this.addAdminCORSHeaders(await handleContent(request, env, subpath));
       }
 
       switch (route) {
@@ -69,13 +77,16 @@ export class WebsiteAPI {
         case 'home':
           return this.addCORSHeaders(await handleHome(env));
         case 'cache-clear':
-          const sessionToken = request.headers.get('X-Session-Token');
+          const cookieHeader = request.headers.get('Cookie');
+          const sessionToken = cookieHeader?.split(';')
+            .find(c => c.trim().startsWith('session='))
+            ?.split('=')[1];
           const session = sessionToken ? await env.KV.get(`session:${sessionToken}`, 'json') : null;
           if (!session || session.expiresAt < Date.now()) {
-            return this.addCORSHeaders(createErrorResponse('Unauthorized', 401));
+            return this.addAdminCORSHeaders(createErrorResponse('Unauthorized', 401));
           }
           clearContentCache();
-          return this.addCORSHeaders(new Response(JSON.stringify({ success: true, message: 'Cache cleared' }), { status: 200 }));
+          return this.addAdminCORSHeaders(new Response(JSON.stringify({ success: true, message: 'Cache cleared' }), { status: 200 }));
         case 'aboutme':
           return this.addCORSHeaders(await handleAboutMe(env));
         case 'logo':
@@ -83,7 +94,7 @@ export class WebsiteAPI {
         case 'static':
           return this.addCORSHeaders(await handleStaticDetails(env));
         case 'auth':
-          return this.addCORSHeaders(await handleAuth(request, env, '/auth'));
+          return this.addAdminCORSHeaders(await handleAuth(request, env, '/auth'));
         case 'blogs':
           return this.addCORSHeaders(await handleBlogs(env));
         case 'blogs/latest':

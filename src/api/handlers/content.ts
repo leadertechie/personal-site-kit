@@ -8,6 +8,14 @@ import {
   getAuthStore
 } from './auth';
 
+function getSessionToken(request: Request): string | null {
+  const cookieHeader = request.headers.get('Cookie');
+  if (!cookieHeader) return null;
+  const match = cookieHeader.split(';')
+    .find(c => c.trim().startsWith('session='));
+  return match?.split('=')[1] || null;
+}
+
 export async function handleContent(request: Request, env: any, subpath: string): Promise<Response> {
   const bucket = env.CONTENT_BUCKET;
   if (!bucket) {
@@ -17,7 +25,6 @@ export async function handleContent(request: Request, env: any, subpath: string)
   const method = request.method;
   const clientIP = getClientIP(request);
 
-  // Check rate limit first
   const rateCheck = await checkRateLimit(env, clientIP);
   if (!rateCheck.allowed) {
     return new Response(JSON.stringify({ 
@@ -32,61 +39,34 @@ export async function handleContent(request: Request, env: any, subpath: string)
     });
   }
 
-  // Auth check for all operations (including GET in production)
-  const authHeader = request.headers.get('Authorization');
-  const sessionToken = request.headers.get('X-Session-Token');
-  
-  // For dev mode without auth configured, allow basic access
   const store = await getAuthStore(env);
   
   if (!store) {
-    // No auth configured - either dev mode or setup required
     if (method === 'GET') {
       return handleGet(request, bucket, subpath);
     }
     return createErrorResponse('Admin not configured. Use POST /auth/setup to configure.', 401);
   }
 
-  // Verify session or basic auth
+  const sessionToken = getSessionToken(request);
   let isAuthenticated = false;
   
   if (sessionToken) {
-    // Session-based auth
     const session = await env.KV.get(`session:${sessionToken}`, 'json');
     if (session && session.expiresAt > Date.now()) {
       isAuthenticated = true;
     }
-  } else if (authHeader?.startsWith('Basic ')) {
-    // Basic auth for login
+  }
+
+  const authHeader = request.headers.get('Authorization');
+  if (!isAuthenticated && authHeader?.startsWith('Basic ')) {
     try {
       const credentials = atob(authHeader.slice(6));
       const [username, password] = credentials.split(':');
-      
       if (await verifyCredentials(env, username, password)) {
         isAuthenticated = true;
-        
-        // Generate session token
-        const token = crypto.randomUUID();
-        await env.KV.put(`session:${token}`, JSON.stringify({
-          createdAt: Date.now(),
-          expiresAt: Date.now() + (7 * 24 * 60 * 60 * 1000) // 7 days
-        }), { expirationTtl: 7 * 24 * 60 * 60 });
-        
-        // Return response with session header
-        const response = await handleWrite(request, bucket, subpath, env, method);
-        if (response.status === 401) {
-          return response;
-        }
-        return new Response(response.body, {
-          headers: {
-            ...Object.fromEntries(response.headers.entries()),
-            'X-Session-Token': token
-          }
-        });
       }
-    } catch (e) {
-      // Invalid base64 or format
-    }
+    } catch (e) {}
   }
 
   if (!isAuthenticated) {
@@ -94,10 +74,8 @@ export async function handleContent(request: Request, env: any, subpath: string)
     return createErrorResponse('Unauthorized', 401);
   }
 
-  // Clear rate limit on successful auth
   await clearRateLimit(env, clientIP);
 
-  // Route requests
   if (method === 'GET') {
     return handleGet(request, bucket, subpath);
   }
@@ -106,10 +84,7 @@ export async function handleContent(request: Request, env: any, subpath: string)
 }
 
 async function handleGet(request: Request, bucket: any, subpath: string): Promise<Response> {
-  const method = request.method;
-
-  // List content: GET /content (subpath is empty or just slash)
-  if (method === 'GET' && (!subpath || subpath === '/')) {
+  if (request.method === 'GET' && (!subpath || subpath === '/')) {
     try {
       const list = await bucket.list();
       return createJSONResponse(list.objects.map((o: any) => ({
@@ -123,8 +98,7 @@ async function handleGet(request: Request, bucket: any, subpath: string): Promis
     }
   }
 
-  // Get content: GET /content/:key
-  if (method === 'GET' && subpath) {
+  if (request.method === 'GET' && subpath) {
     try {
       const object = await bucket.get(subpath);
       if (!object) {
@@ -143,7 +117,6 @@ async function handleGet(request: Request, bucket: any, subpath: string): Promis
 }
 
 async function handleWrite(request: Request, bucket: any, subpath: string, env: any, method: string): Promise<Response> {
-  // Upload content: PUT /content/:key
   if (method === 'PUT' && subpath) {
     try {
       await bucket.put(subpath, request.body);
@@ -153,7 +126,6 @@ async function handleWrite(request: Request, bucket: any, subpath: string, env: 
     }
   }
 
-  // Delete content: DELETE /content/:key
   if (method === 'DELETE' && subpath) {
     try {
       await bucket.delete(subpath);

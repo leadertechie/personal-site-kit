@@ -10,10 +10,18 @@ import {
   MAX_ATTEMPTS
 } from './auth';
 
+function createSessionCookie(token: string, secure: boolean): string {
+  const expires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toUTCString();
+  const SameSite = secure ? 'Strict' : 'Lax';
+  return `session=${token}; HttpOnly; Secure; SameSite=${SameSite}; Path=/; Expires=${expires}`;
+}
+
 export async function handleAuth(request: Request, env: any, subpath: string): Promise<Response> {
   const method = request.method;
   const clientIP = getClientIP(request);
   const path = subpath.replace(/^\//, '').split('/')[0];
+  const url = new URL(request.url);
+  const isSecure = url.protocol === 'https:';
 
   // Check rate limit for login attempts
   const rateCheck = await checkRateLimit(env, clientIP);
@@ -32,11 +40,11 @@ export async function handleAuth(request: Request, env: any, subpath: string): P
 
   switch (path) {
     case 'setup':
-      return handleSetup(request, env, clientIP);
+      return handleSetup(request, env, clientIP, isSecure);
     case 'status':
       return handleStatus(env);
     case 'login':
-      return handleLogin(request, env, clientIP);
+      return handleLogin(request, env, clientIP, isSecure);
     case 'logout':
       return handleLogout(request, env);
     default:
@@ -44,12 +52,11 @@ export async function handleAuth(request: Request, env: any, subpath: string): P
   }
 }
 
-async function handleSetup(request: Request, env: any, clientIP: string): Promise<Response> {
+async function handleSetup(request: Request, env: any, clientIP: string, isSecure: boolean): Promise<Response> {
   if (request.method !== 'POST') {
     return createErrorResponse('Method not allowed', 405);
   }
 
-  // Check if already configured
   const existing = await getAuthStore(env);
   if (existing) {
     return createErrorResponse('Admin already configured. Use /auth/login to login.', 400);
@@ -70,22 +77,23 @@ async function handleSetup(request: Request, env: any, clientIP: string): Promis
     await setupAuth(env, username, password);
     await clearRateLimit(env, clientIP);
 
-    // Generate session token
     const token = crypto.randomUUID();
     await env.KV.put(`session:${token}`, JSON.stringify({
       createdAt: Date.now(),
       expiresAt: Date.now() + (7 * 24 * 60 * 60 * 1000)
     }), { expirationTtl: 7 * 24 * 60 * 60 });
 
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      'Set-Cookie': createSessionCookie(token, isSecure)
+    };
+
     return new Response(JSON.stringify({ 
       success: true,
       message: 'Admin configured successfully'
     }), {
       status: 201,
-      headers: { 
-        'Content-Type': 'application/json',
-        'X-Session-Token': token
-      }
+      headers
     });
   } catch (e) {
     return createErrorResponse('Invalid request body', 400);
@@ -101,7 +109,7 @@ async function handleStatus(env: any): Promise<Response> {
   });
 }
 
-async function handleLogin(request: Request, env: any, clientIP: string): Promise<Response> {
+async function handleLogin(request: Request, env: any, clientIP: string, isSecure: boolean): Promise<Response> {
   if (request.method !== 'POST') {
     return createErrorResponse('Method not allowed', 405);
   }
@@ -128,15 +136,17 @@ async function handleLogin(request: Request, env: any, clientIP: string): Promis
         expiresAt: Date.now() + (7 * 24 * 60 * 60 * 1000)
       }), { expirationTtl: 7 * 24 * 60 * 60 });
 
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        'Set-Cookie': createSessionCookie(token, isSecure)
+      };
+
       return new Response(JSON.stringify({ 
         success: true,
         message: 'Login successful'
       }), {
         status: 200,
-        headers: { 
-          'Content-Type': 'application/json',
-          'X-Session-Token': token
-        }
+        headers
       });
     } else {
       await recordFailedAttempt(env, clientIP);
@@ -152,10 +162,20 @@ async function handleLogout(request: Request, env: any): Promise<Response> {
     return createErrorResponse('Method not allowed', 405);
   }
 
-  const sessionToken = request.headers.get('X-Session-Token');
+  const cookieHeader = request.headers.get('Cookie');
+  const sessionToken = cookieHeader?.split(';')
+    .find(c => c.trim().startsWith('session='))
+    ?.split('=')[1];
+
   if (sessionToken) {
     await env.KV.delete(`session:${sessionToken}`);
   }
 
-  return createJSONResponse({ success: true, message: 'Logged out' });
+  return new Response(JSON.stringify({ success: true, message: 'Logged out' }), {
+    status: 200,
+    headers: {
+      'Content-Type': 'application/json',
+      'Set-Cookie': 'session=; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=0'
+    }
+  });
 }
