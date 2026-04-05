@@ -60,10 +60,7 @@ export class MyAboutme extends LitElement {
     }
 
     // Load content if a baseUrl is provided. In dev/prod, this will be set.
-    const url = this.apiBaseUrl;
-    if (url) {
-      this.loadContent();
-    }
+    this.loadContent();
   }
 
   updated(changedProperties: Map<string, any>) {
@@ -76,14 +73,18 @@ export class MyAboutme extends LitElement {
     
     // If baseUrl changed and we have a valid baseUrl, load content
     if (changedProperties.has('baseUrl') || changedProperties.has('base-url')) {
-      const url = this.apiBaseUrl;
-      if (url) {
-        this.loadContent();
-      }
+      this.loadContent();
     }
   }
 
   private async loadContent() {
+    const url = this.apiBaseUrl;
+    if (!url) {
+      this.loading = false;
+      this.setFallbackContent();
+      return;
+    }
+
     try {
       this.loading = true;
 
@@ -110,8 +111,16 @@ export class MyAboutme extends LitElement {
     this.profile = null; // No profile data
     this.contentNodes = [
       {
+        type: 'heading',
+        content: 'Profile Not Found'
+      },
+      {
         type: 'paragraph',
-        content: 'Unable to Load Content'
+        content: 'Your about-me profile has not been initialized yet. Please run the seed command to get started:'
+      },
+      {
+        type: 'paragraph',
+        content: 'npm run seed -- <username> <password>'
       }
     ];
   }

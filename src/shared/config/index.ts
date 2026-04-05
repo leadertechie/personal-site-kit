@@ -20,7 +20,9 @@ let activeConfig: WebsiteConfig = { ...DEFAULT_INFRA, ...DEFAULT_STATIC };
 
 export async function initializeConfig(infra?: Partial<InfrastructureConfig>): Promise<WebsiteConfig> {
   if (infra) {
-    activeConfig = { ...activeConfig, ...infra };
+    // Only merge defined values
+    if (infra.baseUrl) activeConfig.baseUrl = infra.baseUrl;
+    if (infra.apiUrl) activeConfig.apiUrl = infra.apiUrl;
   }
 
   try {
