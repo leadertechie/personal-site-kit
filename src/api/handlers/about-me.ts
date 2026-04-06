@@ -66,24 +66,34 @@ export async function handleAboutMe(env?: any): Promise<Response> {
     }
     console.log('handleAboutMe: r2 created, fetching data');
 
-    const [profileObj, astResult] = await Promise.all([
+    const [profileObj, rendered] = await Promise.all([
       r2.getObject('profile.json'),
-      r2.getWithAST('about-me.md')
+      r2.getRendered('about-me.md')
     ]);
 
-    console.log('handleAboutMe: profileObj =', !!profileObj, 'astResult =', !!astResult);
-
-    if (!profileObj || !astResult) {
-      throw new Error('Content not found in R2');
+    if (!rendered) {
+      return new Response(JSON.stringify({ error: 'About-me content not found. Please run seed.' }), {
+        status: 404,
+        headers: { 'Content-Type': 'application/json' },
+      });
     }
 
-    const profile = await profileObj.json() as Profile;
+    let profile: Profile = {
+      name: 'Your Name',
+      title: 'Professional',
+      experience: 'Experienced',
+      profileImageUrl: ''
+    };
+
+    if (profileObj) {
+      profile = await profileObj.json() as Profile;
+    }
     console.log('handleAboutMe: profile loaded:', profile.name);
 
     const responseData: AboutMeApiResponse = {
       profile,
-      contentNodes: astResult.contentNodes,
-      processedMarkdown: ''
+      contentNodes: [],
+      processedMarkdown: rendered.content
     };
 
     return new Response(JSON.stringify(responseData), {

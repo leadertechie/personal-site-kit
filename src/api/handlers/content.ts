@@ -48,7 +48,7 @@ export async function handleContent(request: Request, env: any, subpath: string)
     return createErrorResponse('Admin not configured. Use POST /auth/setup to configure.', 401);
   }
 
-  const sessionToken = getSessionToken(request);
+  const sessionToken = getSessionToken(request) || request.headers.get('X-Session-Token');
   let isAuthenticated = false;
   
   if (sessionToken) {

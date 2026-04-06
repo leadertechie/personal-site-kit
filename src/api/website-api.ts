@@ -21,23 +21,23 @@ export class WebsiteAPI {
   private addCORSHeaders(response: Response): Response {
     response.headers.set('Access-Control-Allow-Origin', '*' );
     response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS' );
-    response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Session-Token');
     return response;
   }
 
   private addAdminCORSHeaders(response: Response, origin: string): Response {
-    const allowOrigin = origin.includes('localhost') || origin.includes('127.0.0.1') 
+    const allowOrigin = origin && (origin.includes('localhost') || origin.includes('127.0.0.1')) 
       ? origin 
       : 'same-origin';
     response.headers.set('Access-Control-Allow-Origin', allowOrigin);
     response.headers.set('Access-Control-Allow-Credentials', 'true');
     response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-    response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Session-Token');
     return response;
   }
 
   private handleCORS(origin: string): Response {
-    const allowOrigin = origin.includes('localhost') || origin.includes('127.0.0.1') 
+    const allowOrigin = origin && (origin.includes('localhost') || origin.includes('127.0.0.1')) 
       ? origin 
       : '*';
     return new Response(null, {
@@ -45,7 +45,7 @@ export class WebsiteAPI {
       headers: {
         'Access-Control-Allow-Origin': allowOrigin ,
         'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS' ,
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Session-Token',
         'Access-Control-Allow-Credentials': 'true',
         'Access-Control-Max-Age': '86400',
       },
@@ -79,6 +79,12 @@ export class WebsiteAPI {
         return this.addAdminCORSHeaders(await handleContent(request, env, subpath), origin);
       }
 
+      // Check for auth route (auth/*)
+      if (route === 'auth' || route.startsWith('auth/')) {
+        const subpath = route.replace(/^auth\/?/, '');
+        return this.addAdminCORSHeaders(await handleAuth(request, env, subpath || '/'), origin);
+      }
+
       switch (route) {
         case 'info':
           return this.addCORSHeaders(await handleInfo());
@@ -101,8 +107,6 @@ export class WebsiteAPI {
           return this.addCORSHeaders(await handleLogo(env));
         case 'static':
           return this.addCORSHeaders(await handleStaticDetails(env));
-        case 'auth':
-          return this.addAdminCORSHeaders(await handleAuth(request, env, '/auth'), origin);
         case 'blogs':
           return this.addCORSHeaders(await handleBlogs(env));
         case 'blogs/latest':
