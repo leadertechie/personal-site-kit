@@ -16,7 +16,7 @@ export async function handleStaticDetails(env?: any, method?: string, body?: any
 
     // GET - return static details
     if (!method || method === 'GET') {
-      const staticDetails = await env.CONTENT_BUCKET.get('staticdetails.json');
+      const staticDetails = await env.CONTENT_BUCKET.get('static-details.json');
       if (staticDetails) {
         const data = await staticDetails.json();
         return new Response(JSON.stringify({ ...DEFAULT_STATIC_DETAILS, ...data }), {
