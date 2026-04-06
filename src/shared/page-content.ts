@@ -1,7 +1,7 @@
 import { IFooterLink } from './interfaces/ifooter-link';
 import { IRoute } from './interfaces/iroute';
 export type { IFooterLink, IRoute };
-import { MarkdownPipeline } from '@leadertechie/md2html';
+import { MarkdownPipeline } from '@leadertechie/r2tohtml';
 
 export interface PageContent {
   title: string;
@@ -79,14 +79,14 @@ export const generatePageContent = (
   const footerTemplate = `
     <my-footer
       copyright="${copyright}"
-      footerLinks='${JSON.stringify(footerLinks)}'>
+      footer-links='${JSON.stringify(footerLinks)}'>
     </my-footer>`;
 
   const renderContentGists = (items: ContentMetadata[] = [], title: string, type: 'blogs' | 'stories') => {
     const listHtml = items.length > 0 
       ? items.map(item => `
         <div class="gist-card">
-          <a href="${type}/${item.slug}" data-route="${type}-${item.slug}"><h4>${item.title}</h4></a>
+          <a href="/${type}/${item.slug}" data-route="${type}-${item.slug}"><h4>${item.title}</h4></a>
           <p>${item.summary || item.description || ''}</p>
           <small>${new Date(item.date).toLocaleDateString()}</small>
         </div>
@@ -161,7 +161,7 @@ export const generatePageContent = (
           <div class="wide-main-column text-left">
             <div id="content-viewer">
               ${currentSlug 
-                ? (isBlog ? `<my-blog-viewer slug="${currentSlug}"></my-blog-viewer>` : `<my-story-viewer slug="${currentSlug}"></my-story-viewer>`)
+                ? (isBlog ? `<my-blog-viewer slug="${currentSlug}" api-url="${data?.apiUrl || ''}"></my-blog-viewer>` : `<my-story-viewer slug="${currentSlug}" api-url="${data?.apiUrl || ''}"></my-story-viewer>`)
                 : (items && items.length > 0 ? `<p>Select a ${type.slice(0, -1)} to read.</p>` : '')}
             </div>
           </div>

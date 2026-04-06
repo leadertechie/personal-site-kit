@@ -178,8 +178,15 @@ export class AdminPortal extends LitElement {
       await this.apiService.uploadContent(key, file);
       this.statusMessage = 'Upload successful!';
       await this.fetchContent();
+      
+      // Refresh config if static details were updated
+      if (key === 'static-details.json') {
+        const store = SiteStore.getInstance();
+        await store.refresh();
+      }
     } catch (e) {
       this.statusMessage = 'Error uploading.';
+      throw e; // Rethrow to allow caller to handle
     }
   }
 
@@ -204,6 +211,95 @@ export class AdminPortal extends LitElement {
 
   private handleStatusMessage(message: string) {
     this.statusMessage = message;
+  }
+
+  private renderHomeSection() {
+    return html`
+      <admin-home-section
+        .contentList=${this.contentList}
+        .onUpload=${this.handleUpload.bind(this)}
+        .onDelete=${this.handleDelete.bind(this)}
+        .onStatusMessage=${this.handleStatusMessage.bind(this)}
+      ></admin-home-section>
+    `;
+  }
+
+  private renderProfileSection() {
+    return html`
+      <admin-profile-section
+        .contentList=${this.contentList}
+        .onUpload=${this.handleUpload.bind(this)}
+        .onDelete=${this.handleDelete.bind(this)}
+        .onStatusMessage=${this.handleStatusMessage.bind(this)}
+      ></admin-profile-section>
+    `;
+  }
+
+  private renderAboutMeSection() {
+    return html`
+      <admin-about-me-section
+        .contentList=${this.contentList}
+        .onUpload=${this.handleUpload.bind(this)}
+        .onDelete=${this.handleDelete.bind(this)}
+        .onStatusMessage=${this.handleStatusMessage.bind(this)}
+      ></admin-about-me-section>
+    `;
+  }
+
+  private renderBlogsSection() {
+    return html`
+      <admin-blogs-section
+        .contentList=${this.contentList}
+        .onUpload=${this.handleUpload.bind(this)}
+        .onDelete=${this.handleDelete.bind(this)}
+        .onStatusMessage=${this.handleStatusMessage.bind(this)}
+      ></admin-blogs-section>
+    `;
+  }
+
+  private renderStoriesSection() {
+    return html`
+      <admin-stories-section
+        .contentList=${this.contentList}
+        .onUpload=${this.handleUpload.bind(this)}
+        .onDelete=${this.handleDelete.bind(this)}
+        .onStatusMessage=${this.handleStatusMessage.bind(this)}
+      ></admin-stories-section>
+    `;
+  }
+
+  private renderImagesSection() {
+    return html`
+      <admin-images-section
+        .contentList=${this.contentList}
+        .onUpload=${this.handleUpload.bind(this)}
+        .onDelete=${this.handleDelete.bind(this)}
+        .onStatusMessage=${this.handleStatusMessage.bind(this)}
+      ></admin-images-section>
+    `;
+  }
+
+  private renderLogoSection() {
+    return html`
+      <admin-logo-section
+        .contentList=${this.contentList}
+        .onUpload=${this.handleUpload.bind(this)}
+        .onDelete=${this.handleDelete.bind(this)}
+        .onStatusMessage=${this.handleStatusMessage.bind(this)}
+      ></admin-logo-section>
+    `;
+  }
+
+  private renderStaticSection() {
+    return html`
+      <admin-static-section
+        .contentList=${this.contentList}
+        .staticDetails=${this.staticDetails}
+        .onUpload=${this.handleUpload.bind(this)}
+        .onDelete=${this.handleDelete.bind(this)}
+        .onStatusMessage=${this.handleStatusMessage.bind(this)}
+      ></admin-static-section>
+    `;
   }
 
   renderLoginForm() {
@@ -264,131 +360,6 @@ export class AdminPortal extends LitElement {
             @click=${() => this.activeSection = 'logo'}>Logo</button>
           <button class="nav-tab ${this.activeSection === 'static' ? 'active' : ''}"
             @click=${() => { this.activeSection = 'static'; this.fetchStaticDetails(); }}>Site Settings</button>
-        </div>
-
-        ${this.statusMessage ? html`
-          <div class="status-message ${this.statusMessage.includes('successful') || this.statusMessage.includes('cleared') ? 'success' : this.statusMessage.includes('failed') || this.statusMessage.includes('Error') ? 'error' : ''}">
-            ${this.statusMessage}
-          </div>
-        ` : ''}
-
-        ${this.activeSection === 'home' ? html`
-          <admin-home-section
-            .contentList=${this.contentList}
-            .onUpload=${this.handleUpload.bind(this)}
-            .onDelete=${this.handleDelete.bind(this)}
-            .onStatusMessage=${this.handleStatusMessage.bind(this)}
-          ></admin-home-section>
-        ` : ''}
-
-        ${this.activeSection === 'profile' ? html`
-          <admin-profile-section
-            .contentList=${this.contentList}
-            .onUpload=${this.handleUpload.bind(this)}
-            .onDelete=${this.handleDelete.bind(this)}
-            .onStatusMessage=${this.handleStatusMessage.bind(this)}
-          ></admin-profile-section>
-        ` : ''}
-
-        ${this.activeSection === 'aboutme' ? html`
-          <admin-about-me-section
-            .contentList=${this.contentList}
-            .onUpload=${this.handleUpload.bind(this)}
-            .onDelete=${this.handleDelete.bind(this)}
-            .onStatusMessage=${this.handleStatusMessage.bind(this)}
-          ></admin-about-me-section>
-        ` : ''}
-
-        ${this.activeSection === 'blogs' ? html`
-          <admin-blogs-section
-            .contentList=${this.contentList}
-            .onUpload=${this.handleUpload.bind(this)}
-            .onDelete=${this.handleDelete.bind(this)}
-            .onStatusMessage=${this.handleStatusMessage.bind(this)}
-          ></admin-blogs-section>
-        ` : ''}
-
-        ${this.activeSection === 'stories' ? html`
-          <admin-stories-section
-            .contentList=${this.contentList}
-            .onUpload=${this.handleUpload.bind(this)}
-            .onDelete=${this.handleDelete.bind(this)}
-            .onStatusMessage=${this.handleStatusMessage.bind(this)}
-          ></admin-stories-section>
-        ` : ''}
-
-        ${this.activeSection === 'images' ? html`
-          <admin-images-section
-            .contentList=${this.contentList}
-            .onUpload=${this.handleUpload.bind(this)}
-            .onDelete=${this.handleDelete.bind(this)}
-            .onStatusMessage=${this.handleStatusMessage.bind(this)}
-          ></admin-images-section>
-        ` : ''}
-
-        ${this.activeSection === 'logo' ? html`
-          <admin-logo-section
-            .contentList=${this.contentList}
-            .onUpload=${this.handleUpload.bind(this)}
-            .onDelete=${this.handleDelete.bind(this)}
-            .onStatusMessage=${this.handleStatusMessage.bind(this)}
-          ></admin-logo-section>
-        ` : ''}
-
-        ${this.activeSection === 'static' ? html`
-          <admin-static-section
-            .contentList=${this.contentList}
-            .staticDetails=${this.staticDetails}
-            .onUpload=${this.handleUpload.bind(this)}
-            .onDelete=${this.handleDelete.bind(this)}
-            .onStatusMessage=${this.handleStatusMessage.bind(this)}
-          ></admin-static-section>
-        ` : ''}
-      </div>
-    `;
-  }
-
-  render() {
-    if (this.isLoading) {
-      return html`<div class="container"><div class="loading">Loading...</div></div>`;
-    }
-
-    if (!this.isSetup) {
-      return this.renderLoginForm();
-    }
-
-    if (!this.isAuthenticated) {
-      return this.renderLogin();
-    }
-
-    return html`
-      <div class="container">
-        <div class="header">
-          <h1>Content Manager</h1>
-          <button class="btn-secondary" @click=${() => this.handleLogout()}>Logout</button>
-          <button class="btn-secondary" @click=${() => this.handleClearCache()}>Clear Cache</button>
-        </div>
-        
-        <div class="nav-tabs">
-          <button class="nav-tab ${this.activeSection === 'home' ? 'active' : ''}" 
-            @click=${() => this.activeSection = 'home'}>Home</button>
-          <button class="nav-tab ${this.activeSection === 'profile' ? 'active' : ''}" 
-            @click=${() => this.activeSection = 'profile'}>Profile</button>
-          <button class="nav-tab ${this.activeSection === 'aboutme' ? 'active' : ''}"
-            @click=${() => this.activeSection = 'aboutme'}>About Me</button>
-          <button class="nav-tab ${this.activeSection === 'blogs' ? 'active' : ''}"
-            @click=${() => this.activeSection = 'blogs'}>Blogs</button>
-          <button class="nav-tab ${this.activeSection === 'stories' ? 'active' : ''}"
-            @click=${() => this.activeSection = 'stories'}>Stories</button>
-          <button class="nav-tab ${this.activeSection === 'images' ? 'active' : ''}"
-            @click=${() => this.activeSection = 'images'}>Images</button>
-          <button class="nav-tab ${this.activeSection === 'logo' ? 'active' : ''}"
-            @click=${() => this.activeSection = 'logo'}>Logo</button>
-          <button class="nav-tab ${this.activeSection === 'static' ? 'active' : ''}"
-            @click=${() => { 
-              this.activeSection = 'static'; 
-              this.fetchStaticDetails(); 
-            }}>Site Settings</button>
         </div>
 
         ${this.statusMessage ? html`

@@ -1,7 +1,6 @@
 import { LitElement, html, css } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
-import { unsafeHTML } from 'lit/directives/unsafe-html.js';
-import { MarkdownPipeline } from '@leadertechie/md2html';
+import { MarkdownPipeline } from '@leadertechie/r2tohtml';
 
 import { storyviewerStyles } from './styles';
 
@@ -108,9 +107,7 @@ export class StoryViewer extends LitElement {
             ${tags.map(tag => html`<span class="tag">${tag}</span>`)}
           </div>
         ` : ''}
-        <div class="content">
-          ${unsafeHTML(this.renderMarkdown(content))}
-        </div>
+        <div class="content" .innerHTML=${this.renderMarkdown(content)}></div>
       </article>
     `;
   }

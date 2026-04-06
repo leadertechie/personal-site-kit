@@ -8,7 +8,7 @@ export class AdminHomeSection extends AdminSection {
     const input = this.shadowRoot?.querySelector('#homeFile') as HTMLInputElement;
     if (input.files?.[0]) {
       try {
-        await this.onUpload('home.md', input.files[0]);
+        await this.onUpload('pages/home.md', input.files[0]);
         this.onStatusMessage('Upload successful!');
       } catch (e) {
         this.onStatusMessage('Upload failed.');
@@ -17,16 +17,16 @@ export class AdminHomeSection extends AdminSection {
   }
 
   private async handleDelete() {
-    if (!confirm('Delete home.md?')) return;
+    if (!confirm('Delete pages/home.md?')) return;
     try {
-      await this.onDelete('home.md');
+      await this.onDelete('pages/home.md');
     } catch (e) {
       this.onStatusMessage('Delete failed.');
     }
   }
 
   render() {
-    const home = this.getContent('home.md');
+    const home = this.getContent('pages/home.md');
     return html`
       <div class="section">
         <h3>Home Page</h3>
@@ -34,7 +34,7 @@ export class AdminHomeSection extends AdminSection {
 
         ${home ? html`
           <div class="current-file">
-            <strong>Current:</strong> home.md (${home.size} bytes)
+            <strong>Current:</strong> pages/home.md (${home.size} bytes)
             <button class="btn-danger" @click=${this.handleDelete}>Delete</button>
           </div>
         ` : ''}

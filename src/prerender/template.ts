@@ -44,6 +44,7 @@ export const createHtmlTemplate = async ({
 <html lang="en" data-theme="light">
   <head>
     <meta charset="UTF-8" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data: https:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; font-src 'self' data: https:;" />
     <link rel="icon" type="image/svg+xml" href="/api/logo" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>${title}</title>

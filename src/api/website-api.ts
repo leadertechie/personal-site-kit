@@ -26,29 +26,43 @@ export class WebsiteAPI {
   }
 
   private addAdminCORSHeaders(response: Response, origin: string): Response {
-    const allowOrigin = origin && (origin.includes('localhost') || origin.includes('127.0.0.1')) 
-      ? origin 
-      : 'same-origin';
-    response.headers.set('Access-Control-Allow-Origin', allowOrigin);
-    response.headers.set('Access-Control-Allow-Credentials', 'true');
+    // For admin/sensitive routes, we want to be stricter
+    // Allow localhost/127.0.0.1 for development
+    const isLocal = origin && (origin.includes('localhost') || origin.includes('127.0.0.1'));
+    
+    if (isLocal) {
+      response.headers.set('Access-Control-Allow-Origin', origin);
+      response.headers.set('Access-Control-Allow-Credentials', 'true');
+    } else if (origin) {
+      // In production, we typically want to only allow our own domain.
+      // Since we don't know it here, we'll echo back the origin ONLY if it matches our expectation
+      // For now, we'll stick to a safer default or same-origin behavior
+      // response.headers.set('Access-Control-Allow-Origin', origin); 
+    }
+
     response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
     response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Session-Token');
     return response;
   }
 
   private handleCORS(origin: string): Response {
-    const allowOrigin = origin && (origin.includes('localhost') || origin.includes('127.0.0.1')) 
-      ? origin 
-      : '*';
+    const isLocal = origin && (origin.includes('localhost') || origin.includes('127.0.0.1'));
+    const allowOrigin = isLocal ? origin : '*';
+
+    const headers: Record<string, string> = {
+      'Access-Control-Allow-Origin': allowOrigin,
+      'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Session-Token',
+      'Access-Control-Max-Age': '86400',
+    };
+
+    if (isLocal) {
+      headers['Access-Control-Allow-Credentials'] = 'true';
+    }
+
     return new Response(null, {
-      status: 200,
-      headers: {
-        'Access-Control-Allow-Origin': allowOrigin ,
-        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS' ,
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Session-Token',
-        'Access-Control-Allow-Credentials': 'true',
-        'Access-Control-Max-Age': '86400',
-      },
+      status: 204, // No content for OPTIONS
+      headers,
     });
   }
 
@@ -89,7 +103,7 @@ export class WebsiteAPI {
         case 'info':
           return this.addCORSHeaders(await handleInfo());
         case 'home':
-          return this.addCORSHeaders(await handleHome(env));
+          return this.addAdminCORSHeaders(await handleHome(env), origin);
         case 'cache-clear':
           const cookieHeader = request.headers.get('Cookie');
           const sessionToken = cookieHeader?.split(';')
@@ -102,37 +116,40 @@ export class WebsiteAPI {
           clearContentCache();
           return this.addAdminCORSHeaders(new Response(JSON.stringify({ success: true, message: 'Cache cleared' }), { status: 200 }), origin);
         case 'aboutme':
-          return this.addCORSHeaders(await handleAboutMe(env));
+          return this.addAdminCORSHeaders(await handleAboutMe(env), origin);
         case 'logo':
-          return this.addCORSHeaders(await handleLogo(env));
+          return this.addAdminCORSHeaders(await handleLogo(env), origin);
         case 'static':
-          return this.addCORSHeaders(await handleStaticDetails(env));
+          return this.addAdminCORSHeaders(await handleStaticDetails(env), origin);
         case 'blogs':
-          return this.addCORSHeaders(await handleBlogs(env));
+          return this.addAdminCORSHeaders(await handleBlogs(env), origin);
         case 'blogs/latest':
           const latestCount = url.searchParams.get('count');
-          return this.addCORSHeaders(await handleBlogs(env, undefined, latestCount ? parseInt(latestCount) : 5));
+          return this.addAdminCORSHeaders(await handleBlogs(env, undefined, latestCount ? parseInt(latestCount) : 5), origin);
         default:
+          if (route.startsWith('images/')) {
+            return this.addAdminCORSHeaders(await handleContent(request, env, route), origin);
+          }
           if (route.startsWith('blogs/')) {
             const slug = route.replace('blogs/', '');
-            return this.addCORSHeaders(await handleBlogs(env, slug));
+            return this.addAdminCORSHeaders(await handleBlogs(env, slug), origin);
           }
           if (route.startsWith('stories')) {
             if (route === 'stories') {
-              return this.addCORSHeaders(await handleStories(env));
+              return this.addAdminCORSHeaders(await handleStories(env), origin);
             }
             if (route === 'stories/latest') {
               const latestCount = url.searchParams.get('count');
-              return this.addCORSHeaders(await handleStories(env, undefined, latestCount ? parseInt(latestCount) : 5));
+              return this.addAdminCORSHeaders(await handleStories(env, undefined, latestCount ? parseInt(latestCount) : 5), origin);
             }
             const slug = route.replace('stories/', '');
-            return this.addCORSHeaders(await handleStories(env, slug));
+            return this.addAdminCORSHeaders(await handleStories(env, slug), origin);
           }
           if (route === 'search') {
             const query = url.searchParams.get('q');
-            return this.addCORSHeaders(await handleSearch(env, query || undefined));
+            return this.addAdminCORSHeaders(await handleSearch(env, query || undefined), origin);
           }
-          return this.addCORSHeaders(createErrorResponse('Route not found', 404));
+          return this.addAdminCORSHeaders(createErrorResponse('Route not found', 404), origin);
       }
     } catch (error) {
       console.error('API Error:', error);

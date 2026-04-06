@@ -1,7 +1,6 @@
 import { LitElement, html, css } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
-import { unsafeHTML } from 'lit/directives/unsafe-html.js';
-import { MarkdownPipeline, ContentNode } from '@leadertechie/md2html';
+import { MarkdownPipeline, ContentNode } from '@leadertechie/r2tohtml';
 
 import { blogviewerStyles } from './styles';
 
@@ -41,9 +40,10 @@ export class BlogViewer extends LitElement {
 
   private get apiBaseUrl(): string {
     return this.getAttribute('api-url') || 
+           this.getAttribute('base-url') ||
            (window as any).__VITE_API_URL__ || 
-           import.meta.env.VITE_API_URL || 
-           'https://api.exampledomain.com';
+           (import.meta as any).env?.VITE_API_URL || 
+           (typeof window !== 'undefined' ? window.location.origin : '');
   }
 
   connectedCallback() {
@@ -64,11 +64,12 @@ export class BlogViewer extends LitElement {
     this.error = '';
     console.log('[BlogViewer] Loading blog:', this.slug);
 
-    fetch(`${this.apiBaseUrl}/api/blogs/${this.slug}`)
+    const url = `${this.apiBaseUrl}/api/blogs/${this.slug}`;
+    fetch(url)
       .then(res => {
-        console.log('[BlogViewer] Response status:', res.status);
+        console.log('[BlogViewer] Response status:', res.status, 'from:', url);
         if (res.ok) return res.json();
-        throw new Error('Failed to load blog');
+        throw new Error(`Failed to load blog: ${res.statusText}`);
       })
       .then(blog => {
         console.log('[BlogViewer] Found blog:', blog?.title, 'slug:', blog?.slug);
@@ -112,9 +113,7 @@ export class BlogViewer extends LitElement {
             ${tags.map(tag => html`<span class="tag">${tag}</span>`)}
           </div>
         ` : ''}
-        <div class="content">
-          ${unsafeHTML(this.renderMarkdown(content))}
-        </div>
+        <div class="content" .innerHTML=${this.renderMarkdown(content)}></div>
       </article>
     `;
   }

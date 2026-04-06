@@ -4,7 +4,7 @@ export * from './types';
 
 const DEFAULT_INFRA: InfrastructureConfig = {
   baseUrl: typeof window !== 'undefined' ? window.location.origin : 'http://localhost:5173',
-  apiUrl: (typeof window !== 'undefined' && ((window as any).__VITE_API_URL__ || (import.meta as any).env?.VITE_API_URL)) || 'http://localhost:8788'
+  apiUrl: (typeof window !== 'undefined' && ((window as any).__VITE_API_URL__ || (import.meta as any).env?.VITE_API_URL)) || (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:8787')
 };
 
 const DEFAULT_STATIC: StaticDetails = {
@@ -29,12 +29,29 @@ export async function initializeConfig(infra?: Partial<InfrastructureConfig>): P
     const res = await fetch(`${activeConfig.apiUrl}/api/static`);
     if (res.ok) {
       const remoteStatic = await res.json().catch(() => ({}));
-      activeConfig = { ...activeConfig, ...remoteStatic };
+      // Filter out undefined/null values from remote config
+      const filteredStatic = Object.fromEntries(
+        Object.entries(remoteStatic).filter(([_, v]) => v != null && v !== '')
+      );
+      activeConfig = { ...activeConfig, ...filteredStatic };
     }
   } catch (e) {
     console.warn('Failed to load static details from R2, using defaults.');
   }
 
+  return activeConfig;
+}
+
+export async function refreshConfig(): Promise<WebsiteConfig> {
+  try {
+    const res = await fetch(`${activeConfig.apiUrl}/api/static`);
+    if (res.ok) {
+      const remoteStatic = await res.json().catch(() => ({}));
+      activeConfig = { ...activeConfig, ...remoteStatic };
+    }
+  } catch (e) {
+    console.warn('Failed to refresh static details.');
+  }
   return activeConfig;
 }
 

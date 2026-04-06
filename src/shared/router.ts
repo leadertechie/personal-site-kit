@@ -4,9 +4,6 @@ import { WebsiteUI } from './website-ui';
 
 export class Router {
   private routes: IRoute[];
-  private siteTitle: string;
-  private copyright: string;
-  private footerLinks: IFooterLink[];
   private apiUrl: string;
   private logo: string = '/api/logo';
   private appElement: HTMLElement | null = null;
@@ -23,10 +20,22 @@ export class Router {
       { link: '/about-me', text: 'About Me' },
     ];
 
-    this.siteTitle = config.siteTitle;
-    this.copyright = config.copyright;
     this.apiUrl = config.apiUrl;
-    
+  }
+
+  private get config() {
+    return this.ui.getStore().getConfig();
+  }
+
+  private get siteTitle() {
+    return this.config.siteTitle;
+  }
+
+  private get copyright() {
+    return this.config.copyright;
+  }
+
+  private get footerLinks(): IFooterLink[] {
     const normalizeUrl = (url?: string) => {
       if (!url) return '';
       if (url.startsWith('http://') || url.startsWith('https://')) return url;
@@ -34,10 +43,10 @@ export class Router {
       return url;
     };
 
-    this.footerLinks = [
-      { text: 'LinkedIn', link: normalizeUrl(config.linkedin) || 'https://linkedin.com' },
-      { text: 'GitHub', link: normalizeUrl(config.github) || 'https://github.com' },
-      { text: 'Email', link: config.email ? `mailto:${config.email}` : 'mailto:hello@example.com' },
+    return [
+      { text: 'LinkedIn', link: normalizeUrl(this.config.linkedin) || 'https://linkedin.com' },
+      { text: 'GitHub', link: normalizeUrl(this.config.github) || 'https://github.com' },
+      { text: 'Email', link: this.config.email ? `mailto:${this.config.email}` : 'mailto:hello@example.com' },
     ];
   }
 
@@ -199,7 +208,7 @@ export class Router {
     } catch (e) {}
 
     const latestSlug = items.length > 0 ? items[0].slug : undefined;
-    const data = type === 'blogs' ? { blogs: items, slug: latestSlug } : { stories: items, slug: latestSlug };
+    const data = type === 'blogs' ? { blogs: items, slug: latestSlug, apiUrl: this.apiUrl } : { stories: items, slug: latestSlug, apiUrl: this.apiUrl };
     const pageContent = generatePageContent(pathname, this.routes, this.footerLinks, { 
       ...data, siteTitle: this.siteTitle, copyright: this.copyright 
     });
@@ -218,7 +227,7 @@ export class Router {
       if (res.ok) items = await res.json();
     } catch (e) {}
 
-    const data = type === 'blogs' ? { blogs: items, slug } : { stories: items, slug };
+    const data = type === 'blogs' ? { blogs: items, slug, apiUrl: this.apiUrl } : { stories: items, slug, apiUrl: this.apiUrl };
     const pageContent = generatePageContent(pathname, this.routes, this.footerLinks, { 
       ...data, siteTitle: this.siteTitle, copyright: this.copyright 
     });
@@ -243,7 +252,7 @@ export class Router {
         <main class="container container-medium">
           <admin-portal></admin-portal>
         </main>
-        <my-footer copyright="${this.copyright}" footerLinks='[]'></my-footer>
+        <my-footer copyright="${this.copyright}" footerLinks='${JSON.stringify(this.footerLinks)}'></my-footer>
       `;
     }
   }

@@ -11,7 +11,6 @@
   "license": "MIT",
   "files": [
     "dist",
-    "src",
     "README.md",
     "public"
   ],
@@ -36,15 +35,16 @@
       "types": "./dist/prerender.d.ts",
       "import": "./dist/prerender.js"
     },
-    "./styles/*": "./src/styles/*"
+    "./styles/*": "./dist/styles/*"
   },
   "scripts": {
-    "build": "vite build",
+    "build": "vite build && npm run postbuild",
+    "postbuild": "cp -r src/styles dist/",
     "test": "vitest run"
   },
   "dependencies": {
-    "@leadertechie/md2html": "^0.1.0-alpha.10",
-    "@leadertechie/r2tohtml": "^0.1.0-alpha.10",
+    "@leadertechie/md2html": "^0.1.0-alpha.13",
+    "@leadertechie/r2tohtml": "^0.1.0-alpha.12",
     "lit": "^3.2.1"
   },
   "devDependencies": {
