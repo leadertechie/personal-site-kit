@@ -60,18 +60,21 @@ export async function handleAuth(request: Request, env: any, subpath: string): P
 }
 
 async function handleSetup(request: Request, env: any, clientIP: string, origin: string): Promise<Response> {
+  console.log('handleSetup: starting setup, env.KV exists:', !!env.KV);
   if (request.method !== 'POST') {
     return createErrorResponse('Method not allowed', 405);
   }
 
-  const existing = await getAuthStore(env);
-  if (existing) {
-    return createErrorResponse('Admin already configured. Use /auth/login to login.', 400);
-  }
-
   try {
+    const existing = await getAuthStore(env);
+    console.log('handleSetup: existing store check:', !!existing);
+    if (existing) {
+      return createErrorResponse('Admin already configured. Use /auth/login to login.', 400);
+    }
+
     const body = await request.json();
     const { username, password } = body;
+    console.log('handleSetup: body parsed, username:', username);
 
     if (!username || !password) {
       return createErrorResponse('Username and password required', 400);
@@ -81,18 +84,23 @@ async function handleSetup(request: Request, env: any, clientIP: string, origin:
       return createErrorResponse('Username must be 3+ chars, password must be 8+ chars', 400);
     }
 
+    console.log('handleSetup: calling setupAuth');
     await setupAuth(env, username, password);
+    console.log('handleSetup: setupAuth successful');
     await clearRateLimit(env, clientIP);
 
     const token = crypto.randomUUID();
+    console.log('handleSetup: session token generated');
     await env.KV.put(`session:${token}`, JSON.stringify({
       createdAt: Date.now(),
       expiresAt: Date.now() + (7 * 24 * 60 * 60 * 1000)
     }), { expirationTtl: 7 * 24 * 60 * 60 });
+    console.log('handleSetup: session stored in KV');
 
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
-      'Set-Cookie': createSessionCookie(token, origin)
+      'Set-Cookie': createSessionCookie(token, origin),
+      'X-Session-Token': token
     };
 
     return new Response(JSON.stringify({ 
@@ -103,7 +111,8 @@ async function handleSetup(request: Request, env: any, clientIP: string, origin:
       headers
     });
   } catch (e) {
-    return createErrorResponse('Invalid request body', 400);
+    console.error('handleSetup: error occurred:', e);
+    return createErrorResponse('Internal server error: ' + (e as Error).message, 500);
   }
 }
 
@@ -145,7 +154,8 @@ async function handleLogin(request: Request, env: any, clientIP: string, origin:
 
       const headers: Record<string, string> = {
         'Content-Type': 'application/json',
-        'Set-Cookie': createSessionCookie(token, origin)
+        'Set-Cookie': createSessionCookie(token, origin),
+        'X-Session-Token': token
       };
 
       return new Response(JSON.stringify({ 

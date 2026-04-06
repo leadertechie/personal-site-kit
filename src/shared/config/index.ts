@@ -4,7 +4,7 @@ export * from './types';
 
 const DEFAULT_INFRA: InfrastructureConfig = {
   baseUrl: typeof window !== 'undefined' ? window.location.origin : 'http://localhost:5173',
-  apiUrl: (typeof window !== 'undefined' && (window as any).__VITE_API_URL__) || 'http://localhost:8787'
+  apiUrl: (typeof window !== 'undefined' && ((window as any).__VITE_API_URL__ || (import.meta as any).env?.VITE_API_URL)) || 'http://localhost:8788'
 };
 
 const DEFAULT_STATIC: StaticDetails = {

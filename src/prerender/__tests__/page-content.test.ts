@@ -7,25 +7,15 @@ describe('generatePageContent', () => {
     { link: '/about-me', text: 'About' }
   ];
   const mockFooterLinks = [
-    { text: 'Link', href: '#' }
+    { text: 'Link', link: '#' }
   ];
   const mockEnv = {
-    CONTENT_BUCKET: {
-      get: vi.fn().mockResolvedValue({
-        json: () => Promise.resolve({ name: 'User', title: 'Professional', experience: 'some' })
-      }),
-      list: vi.fn().mockResolvedValue({ objects: [] })
-    },
     apiUrl: 'https://api.example.com',
     baseUrl: 'https://www.example.com'
   };
 
   beforeEach(() => {
     vi.clearAllMocks();
-    global.fetch = vi.fn().mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve({ siteTitle: 'My Site', copyright: '2026' })
-    });
   });
 
   it('should generate home page content', async () => {

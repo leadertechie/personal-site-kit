@@ -46,8 +46,8 @@ export async function handleHome(env?: any): Promise<Response> {
 
     const r2 = getLoader(env);
     const [astResult, renderedResult] = await Promise.all([
-      r2.getWithAST('home.md'),
-      r2.getRendered('home.md')
+      r2.getWithAST('pages/home.md'),
+      r2.getRendered('pages/home.md')
     ]);
 
     if (!astResult || !renderedResult) {

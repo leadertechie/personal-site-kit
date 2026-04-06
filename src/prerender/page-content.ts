@@ -68,7 +68,7 @@ async function fetchHome(env: any): Promise<string> {
   try {
     const r2 = getLoader(env);
     if (!r2) return "";
-    const result = await r2.getRendered("home.md");
+    const result = await r2.getRendered("pages/home.md");
     return result?.content || "";
   } catch { return ""; }
 }
@@ -115,8 +115,8 @@ export const generatePageContent = async (
   footerLinks: IFooterLink[],
   env?: any
 ): Promise<PageContent> => {
-  const apiUrl = env?.apiUrl || "https://api.techieleader.com";
-  const baseUrl = env?.baseUrl || "https://www.techieleader.com";
+  const apiUrl = env?.API_URL || env?.apiUrl || "https://api.example.com";
+  const baseUrl = env?.BASE_URL || env?.baseUrl || "https://www.example.com";
   
   let staticDetails = {
     siteTitle: "My Personal Website",
@@ -131,23 +131,6 @@ export const generatePageContent = async (
     if (res.ok) staticDetails = await res.json();
   } catch (e) {}
   
-  const logo = "/api/logo";
-  const navLinks = routes.map(r => `<a href="${r.link}" class="nav-link" data-route="${r.link === "/" ? "home" : r.text.toLowerCase()}">${r.text}</a>`).join("");
-
-  const bannerTemplate = `
-    <my-banner header="${staticDetails.siteTitle}" logo="${logo}">
-      <theme-toggle slot="theme-switcher"></theme-toggle>
-      <nav slot="nav-links">
-        ${navLinks}
-      </nav>
-    </my-banner>`;
-
-  const footerTemplate = `
-    <my-footer
-      copyright="${staticDetails.copyright}"
-      footerlinks='${JSON.stringify(footerLinks)}'>
-    </my-footer>`;
-
   let profile: Profile | null = null;
   let aboutMeContent = "";
   let homeContent = "";
@@ -162,102 +145,122 @@ export const generatePageContent = async (
 
   const name = profile?.name || "User";
   const title = profile?.title || "Professional";
-  const experience = profile?.experience || "some";
   const canonicalUrl = new URL(pathname, baseUrl).toString();
 
+  // Strategy pattern: map pathname patterns to generators
+  const strategies = {
+    home: async () => {
+      const { HomePageGenerator } = await import('./page-generators');
+      const generator = new HomePageGenerator();
+      return generator.generate({
+        routes,
+        footerLinks,
+        staticDetails,
+        apiUrl,
+        baseUrl,
+        pathname,
+        profile,
+        homeContent,
+        latestBlogs,
+        latestStories
+      });
+    },
+    about: async () => {
+      const { AboutPageGenerator } = await import('./page-generators');
+      const generator = new AboutPageGenerator();
+      return generator.generate({
+        routes,
+        footerLinks,
+        staticDetails,
+        apiUrl,
+        baseUrl,
+        pathname,
+        profile
+      });
+    },
+    blogsList: async () => {
+      const { BlogsListPageGenerator } = await import('./page-generators');
+      const generator = new BlogsListPageGenerator();
+      return generator.generate({
+        routes,
+        footerLinks,
+        staticDetails,
+        apiUrl,
+        baseUrl,
+        pathname,
+        latestBlogs,
+        name
+      });
+    },
+    storiesList: async () => {
+      const { StoriesListPageGenerator } = await import('./page-generators');
+      const generator = new StoriesListPageGenerator();
+      return generator.generate({
+        routes,
+        footerLinks,
+        staticDetails,
+        apiUrl,
+        baseUrl,
+        pathname,
+        latestStories,
+        name
+      });
+    },
+    blogDetail: async (slug: string) => {
+      const { BlogDetailPageGenerator } = await import('./page-generators');
+      const generator = new BlogDetailPageGenerator();
+      return generator.generate({
+        routes,
+        footerLinks,
+        staticDetails,
+        apiUrl,
+        baseUrl,
+        pathname,
+        slug
+      });
+    },
+    storyDetail: async (slug: string) => {
+      const { StoryDetailPageGenerator } = await import('./page-generators');
+      const generator = new StoryDetailPageGenerator();
+      return generator.generate({
+        routes,
+        footerLinks,
+        staticDetails,
+        apiUrl,
+        baseUrl,
+        pathname,
+        slug
+      });
+    },
+    notFound: async () => {
+      const { NotFoundPageGenerator } = await import('./page-generators');
+      const generator = new NotFoundPageGenerator();
+      return generator.generate({
+        routes,
+        footerLinks,
+        staticDetails,
+        apiUrl,
+        baseUrl,
+        pathname
+      });
+    }
+  };
+
   if (pathname === "/" || pathname === "") {
-    const homeHtml = homeContent || `<h1>Welcome to ${name}</h1><p>Upload home.md to customize this page.</p>`;
-    const blogGists = latestBlogs.map(b => `<div class="gist-card"><a href="/blogs/${b.slug}"><h4>${b.title}</h4></a><p>${b.summary}</p><small>${b.date}</small></div>`).join("");
-    const storyGists = latestStories.map(s => `<div class="gist-card"><a href="/stories/${s.slug}"><h4>${s.title}</h4></a><p>${s.summary}</p><small>${s.date}</small></div>`).join("");
-
-    const mainContent = `
-    ${bannerTemplate}
-    <main class="container container-wide column-layout">
-      <div class="main-column">
-        ${homeHtml}
-      </div>
-      <div class="sidebar-column">
-        <h3>Recent Blogs</h3>
-        ${blogGists || "<p>No blogs yet.</p>"}
-        <h3 class="mt-2">Recent Stories</h3>
-        ${storyGists || "<p>No stories yet.</p>"}
-      </div>
-    </main>
-    ${footerTemplate}`;
-
-    return {
-      title: `${name} – ${title}`,
-      description: `Welcome to ${name}'s personal website. Professional portfolio and content.`,
-      canonicalUrl,
-      content: mainContent
-    };
+    return strategies.home();
   } else if (pathname === "/about-me") {
-    const mainContent = `
-    ${bannerTemplate}
-    <main class="container container-narrow">
-        <my-aboutme base-url="${apiUrl}"></my-aboutme>
-      </main>
-      ${footerTemplate}`;
-
-    return {
-      title: `About - ${name}`,
-      description: `Learn more about ${name}'s experience and skills.`,
-      canonicalUrl,
-      content: mainContent
-    };
+    return strategies.about();
   } else if (pathname === "/blogs" || pathname === "/blogs/") {
-    const blogGists = latestBlogs.map(b => `<div class="gist-card"><a href="/blogs/${b.slug}"><h4>${b.title}</h4></a><p>${b.summary}</p><small>${b.date}</small></div>`).join("");
-    const mainContent = `
-    ${bannerTemplate}
-    <main class="container container-wide">
-      <h1>Blogs</h1>
-      <input type="text" placeholder="Search blogs..." class="search-input" />
-      <div class="blog-list">
-        ${blogGists || "<p>No blogs yet.</p>"}
-      </div>
-    </main>
-    ${footerTemplate}`;
-    return { title: `Blogs – ${name}`, description: "Read the latest blog posts.", canonicalUrl, content: mainContent };
+    return strategies.blogsList();
   } else if (pathname === "/stories" || pathname === "/stories/") {
-    const storyGists = latestStories.map(s => `<div class="gist-card"><a href="/stories/${s.slug}"><h4>${s.title}</h4></a><p>${s.summary}</p><small>${s.date}</small></div>`).join("");
-    const mainContent = `
-    ${bannerTemplate}
-    <main class="container container-wide">
-      <h1>Stories</h1>
-      <input type="text" placeholder="Search stories..." class="search-input" />
-      <div class="story-list">
-        ${storyGists || "<p>No stories yet.</p>"}
-      </div>
-    </main>
-    ${footerTemplate}`;
-    return { title: `Stories – ${name}`, description: "Read the latest stories.", canonicalUrl, content: mainContent };
+    return strategies.storiesList();
   } else if (pathname.startsWith("/blogs/")) {
     const slug = pathname.replace("/blogs/", "").replace("/", "");
-    const mainContent = `
-    ${bannerTemplate}
-    <main class="container container-narrow">
-      <my-blog-viewer slug="${slug}"></my-blog-viewer>
-    </main>
-    ${footerTemplate}`;
-    return { title: `Blog: ${slug}`, description: "Blog post", canonicalUrl, content: mainContent };
+    return strategies.blogDetail(slug);
   } else if (pathname.startsWith("/stories/")) {
     const slug = pathname.replace("/stories/", "").replace("/", "");
-    const mainContent = `
-    ${bannerTemplate}
-    <main class="container container-narrow">
-      <my-story-viewer slug="${slug}"></my-story-viewer>
-    </main>
-    ${footerTemplate}`;
-    return { title: `Story: ${slug}`, description: "Story post", canonicalUrl, content: mainContent };
+    return strategies.storyDetail(slug);
   } else {
-    const mainContent = `
-    ${bannerTemplate}
-    <main class="container container-narrow text-center">
-        <h1>Page Not Found</h1>
-        <p>The page you're looking for doesn't exist.</p>
-        <p><a href="/">Return to home</a></p>
-      </main>
-      ${footerTemplate}`;
-    return { title: "404 Not Found", description: "The page you requested could not be found.", canonicalUrl, content: mainContent };
+    return strategies.notFound();
   }
 };
