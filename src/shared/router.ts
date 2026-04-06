@@ -35,10 +35,10 @@ export class Router {
     };
 
     this.footerLinks = [
-      { text: 'LinkedIn', link: normalizeUrl(config.linkedin) },
-      { text: 'GitHub', link: normalizeUrl(config.github) },
-      { text: 'Email', link: config.email ? `mailto:${config.email}` : '' },
-    ].filter(link => link.link !== '');
+      { text: 'LinkedIn', link: normalizeUrl(config.linkedin) || 'https://linkedin.com' },
+      { text: 'GitHub', link: normalizeUrl(config.github) || 'https://github.com' },
+      { text: 'Email', link: config.email ? `mailto:${config.email}` : 'mailto:hello@example.com' },
+    ];
   }
 
   public init(appElementId: string = 'app') {
@@ -243,7 +243,7 @@ export class Router {
         <main class="container container-medium">
           <admin-portal></admin-portal>
         </main>
-        <my-footer copyright="${this.copyright}" footerlinks='[]'></my-footer>
+        <my-footer copyright="${this.copyright}" footerLinks='[]'></my-footer>
       `;
     }
   }

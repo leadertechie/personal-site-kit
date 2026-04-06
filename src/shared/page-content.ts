@@ -79,7 +79,7 @@ export const generatePageContent = (
   const footerTemplate = `
     <my-footer
       copyright="${copyright}"
-      footerlinks='\${JSON.stringify(footerLinks)}'>
+      footerLinks='${JSON.stringify(footerLinks)}'>
     </my-footer>`;
 
   const renderContentGists = (items: ContentMetadata[] = [], title: string, type: 'blogs' | 'stories') => {

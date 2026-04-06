@@ -40,7 +40,10 @@ export class BlogViewer extends LitElement {
   accessor error = '';
 
   private get apiBaseUrl(): string {
-    return 'https://api.techieleader.com';
+    return this.getAttribute('api-url') || 
+           (window as any).__VITE_API_URL__ || 
+           import.meta.env.VITE_API_URL || 
+           'https://api.exampledomain.com';
   }
 
   connectedCallback() {

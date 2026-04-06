@@ -1,18 +1,9 @@
 import { LitElement, html, css } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 
-import { ContentNode } from '@leadertechie/md2html';
 import { Profile } from './api';
-
 import { aboutmeStyles } from './styles';
-
-import { AboutMeRenderer } from './renderer';
 import { fetchAboutMe } from './api';
-
-interface AboutMeData {
-  profile: Profile;
-  contentNodes: ContentNode[];
-}
 
 @customElement('my-aboutme')
 export class MyAboutme extends LitElement {
@@ -25,22 +16,15 @@ export class MyAboutme extends LitElement {
   accessor profile: Profile | null = null;
 
   @state()
-  accessor contentNodes: ContentNode[] = [];
+  accessor htmlContent: string = '';
 
   @state()
   accessor loading = true;
 
-  private renderer: AboutMeRenderer;
-  /**
-   * Injectable fetcher function used to retrieve About Me data.
-   * Tests can override this (e.g. componentInstance.fetcher = myMock)
-   * to avoid network I/O. By default it uses the stable `fetchAboutMe` helper.
-   */
   public fetcher = fetchAboutMe;
 
-  constructor(renderer?: AboutMeRenderer) {
+  constructor() {
     super();
-    this.renderer = renderer || new AboutMeRenderer();
   }
 
   private get apiBaseUrl(): string {
@@ -50,28 +34,24 @@ export class MyAboutme extends LitElement {
   async connectedCallback() {
     super.connectedCallback();
 
-    // If we have initial data from SSR, use it immediately.
     if (typeof window !== 'undefined' && (window as any).__HYDRATION_DATA__) {
       const hydrationData = (window as any).__HYDRATION_DATA__;
       this.profile = hydrationData.profile;
-      this.contentNodes = hydrationData.contentNodes;
+      this.htmlContent = hydrationData.processedMarkdown;
       this.loading = false;
       return;
     }
 
-    // Load content if a baseUrl is provided. In dev/prod, this will be set.
     this.loadContent();
   }
 
   updated(changedProperties: Map<string, any>) {
     super.updated(changedProperties);
     
-    // Only load content from API if we haven't already loaded via hydration data
-    if (this.loading === false && this.profile && this.contentNodes.length > 0) {
+    if (this.loading === false && this.profile && this.htmlContent) {
       return;
     }
     
-    // If baseUrl changed and we have a valid baseUrl, load content
     if (changedProperties.has('baseUrl') || changedProperties.has('base-url')) {
       this.loadContent();
     }
@@ -87,42 +67,26 @@ export class MyAboutme extends LitElement {
 
     try {
       this.loading = true;
-
-      // Fetch content from API using the injectable fetcher.
-      // Use the apiBaseUrl getter to get either property or attribute
-      const url = this.apiBaseUrl;
       const data = await this.fetcher(url);
 
       this.profile = data.profile;
-      this.contentNodes = data.contentNodes;
+      this.htmlContent = (data as any).processedMarkdown;
       this.loading = false;
-      // Wait for the render to complete
       await this.updateComplete;
     } catch (error) {
       this.loading = false;
-      // Set fallback content
       this.setFallbackContent();
-      // Wait for the render to complete
       await this.updateComplete;
     }
   }
 
   private setFallbackContent() {
-    this.profile = null; // No profile data
-    this.contentNodes = [
-      {
-        type: 'heading',
-        content: 'Profile Not Found'
-      },
-      {
-        type: 'paragraph',
-        content: 'Your about-me profile has not been initialized yet. Please run the seed command to get started:'
-      },
-      {
-        type: 'paragraph',
-        content: 'npm run seed -- <username> <password>'
-      }
-    ];
+    this.profile = null;
+    this.htmlContent = `
+      <h2>Profile Not Found</h2>
+      <p>Your about-me profile has not been initialized yet. Please run the seed command to get started:</p>
+      <pre>npm run seed -- &lt;username&gt; '&lt;password&gt;'</pre>
+    `;
   }
 
   render() {
@@ -130,15 +94,10 @@ export class MyAboutme extends LitElement {
       return html`<div class="aboutme"><div class="loading">Loading...</div></div>`;
     }
 
-    // If profile is not available, check if fallback content is present.
     if (!this.profile) {
-      if (this.contentNodes && this.contentNodes.length > 0) {
-        return html`<div class="aboutme">${this.renderer.renderContent(this.contentNodes)}</div>`;
-      }
-      return html`<div class="aboutme"><div class="loading">Failed to load content</div></div>`;
+      return html`<div class="aboutme"><div class="content-section" .innerHTML="${this.htmlContent}"></div></div>`;
     }
 
-    // Render profile header + content
     const profileImageUrl = this.profile.profileImageUrl 
       ? (this.profile.profileImageUrl.startsWith('http') || this.profile.profileImageUrl.startsWith('/') 
          ? this.profile.profileImageUrl 
@@ -155,9 +114,7 @@ export class MyAboutme extends LitElement {
           <h1>${this.profile.name}</h1>
           <p class="profile-title">${this.profile.title} • ${this.profile.experience}</p>
         </div>
-        <div class="content-section">
-          ${this.renderer.renderContent(this.contentNodes)}
-        </div>
+        <div class="content-section" .innerHTML="${this.htmlContent}"></div>
       </div>
     `;
   }
