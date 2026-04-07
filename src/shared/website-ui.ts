@@ -44,14 +44,28 @@ export class WebsiteUI {
       baseUrl: this.config.baseUrl
     });
 
-    // 2. Apply theme overrides if any
+    // 2. Subscribe to changes
+    this.store.subscribe(() => {
+      this.applyTheme();
+      this.updateFavicon();
+      
+      // Only trigger full re-navigation if NOT on admin page to avoid state reset
+      if (this.router && window.location.pathname !== '/admin') {
+        this.router.navigate(window.location.pathname);
+      }
+    });
+
+    // 3. Apply theme overrides if any
     this.applyTheme();
 
-    // 3. Setup Router
+    // 4. Update Favicon
+    this.updateFavicon();
+
+    // 5. Setup Router
     this.router = new Router(this);
     this.router.init(this.config.appElementId || 'app');
     
-    // 4. Run bootstrap hook
+    // 6. Run bootstrap hook
     if (this.config.onBootstrap) {
       await this.config.onBootstrap(this);
     }
@@ -73,6 +87,19 @@ export class WebsiteUI {
       const style = document.createElement('style');
       style.textContent = theme.customCss;
       document.head.appendChild(style);
+    }
+  }
+
+  private updateFavicon() {
+    const favicon = document.querySelector('link[rel="icon"]');
+    const logoUrl = `/api/logo?t=${Date.now()}`;
+    if (favicon) {
+      favicon.setAttribute('href', logoUrl);
+    } else {
+      const newFavicon = document.createElement('link');
+      newFavicon.rel = 'icon';
+      newFavicon.href = logoUrl;
+      document.head.appendChild(newFavicon);
     }
   }
 

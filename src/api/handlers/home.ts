@@ -45,12 +45,11 @@ export async function handleHome(env?: any): Promise<Response> {
     }
 
     const r2 = getLoader(env);
-    const [astResult, renderedResult] = await Promise.all([
-      r2.getWithAST('pages/home.md'),
-      r2.getRendered('pages/home.md')
-    ]);
-
-    if (!astResult || !renderedResult) {
+    
+    let astResult = await r2.getWithAST('pages/home.md');
+    let renderedResult = await r2.getRendered('pages/home.md');
+    
+     if (!astResult || !renderedResult) {
       return new Response(JSON.stringify({
         contentNodes: [],
         processedMarkdown: '',

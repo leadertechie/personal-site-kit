@@ -12,7 +12,7 @@ export class FooterComponent extends LitElement {
   @property({ type: String })
   accessor copyright = '';
 
-  @property({ type: Array })
+  @property({ type: Array, attribute: 'footer-links' })
   accessor footerLinks: IFooterLink[] = [];
 
   render() {

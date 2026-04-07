@@ -7,6 +7,8 @@ import {
   getClientIP,
   getAuthStore
 } from './auth';
+import { clearContentCache as clearHomeCache } from './home';
+import { clearContentCache as clearAboutMeCache } from './about-me';
 
 function getSessionToken(request: Request): string | null {
   const cookieHeader = request.headers.get('Cookie');
@@ -37,6 +39,10 @@ export async function handleContent(request: Request, env: any, subpath: string)
         'Retry-After': String(Math.ceil(rateCheck.delayMs / 1000))
       }
     });
+  }
+
+  if (method === 'GET' && subpath.startsWith('images/')) {
+    return handleGet(request, bucket, subpath);
   }
 
   const store = await getAuthStore(env);
@@ -119,7 +125,14 @@ async function handleGet(request: Request, bucket: any, subpath: string): Promis
 async function handleWrite(request: Request, bucket: any, subpath: string, env: any, method: string): Promise<Response> {
   if (method === 'PUT' && subpath) {
     try {
-      await bucket.put(subpath, request.body);
+      const contentType = request.headers.get('Content-Type');
+      const options: any = {};
+      if (contentType) {
+        options.httpMetadata = { contentType };
+      }
+      await bucket.put(subpath, request.body, options);
+      clearHomeCache();
+      clearAboutMeCache();
       return createJSONResponse({ success: true, key: subpath });
     } catch (e: any) {
       return createErrorResponse('Failed to upload content: ' + e.message, 500);
@@ -129,6 +142,8 @@ async function handleWrite(request: Request, bucket: any, subpath: string, env: 
   if (method === 'DELETE' && subpath) {
     try {
       await bucket.delete(subpath);
+      clearHomeCache();
+      clearAboutMeCache();
       return createJSONResponse({ success: true, key: subpath });
     } catch (e: any) {
       return createErrorResponse('Failed to delete content: ' + e.message, 500);

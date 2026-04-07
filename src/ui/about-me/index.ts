@@ -101,7 +101,7 @@ export class MyAboutme extends LitElement {
     const profileImageUrl = this.profile.profileImageUrl 
       ? (this.profile.profileImageUrl.startsWith('http') || this.profile.profileImageUrl.startsWith('/') 
          ? this.profile.profileImageUrl 
-         : `images/${this.profile.profileImageUrl}`)
+         : `${this.apiBaseUrl}/api/images/${this.profile.profileImageUrl}`)
       : '';
     
     return html`

@@ -89,7 +89,7 @@ export class WebsiteAPI {
         case 'info':
           return this.addCORSHeaders(await handleInfo());
         case 'home':
-          return this.addCORSHeaders(await handleHome(env));
+          return this.addAdminCORSHeaders(await handleHome(env), origin);
         case 'cache-clear':
           const cookieHeader = request.headers.get('Cookie');
           const sessionToken = cookieHeader?.split(';')
@@ -102,37 +102,40 @@ export class WebsiteAPI {
           clearContentCache();
           return this.addAdminCORSHeaders(new Response(JSON.stringify({ success: true, message: 'Cache cleared' }), { status: 200 }), origin);
         case 'aboutme':
-          return this.addCORSHeaders(await handleAboutMe(env));
+          return this.addAdminCORSHeaders(await handleAboutMe(env), origin);
         case 'logo':
-          return this.addCORSHeaders(await handleLogo(env));
+          return this.addAdminCORSHeaders(await handleLogo(env), origin);
         case 'static':
-          return this.addCORSHeaders(await handleStaticDetails(env));
+          return this.addAdminCORSHeaders(await handleStaticDetails(env), origin);
         case 'blogs':
-          return this.addCORSHeaders(await handleBlogs(env));
+          return this.addAdminCORSHeaders(await handleBlogs(env), origin);
         case 'blogs/latest':
           const latestCount = url.searchParams.get('count');
-          return this.addCORSHeaders(await handleBlogs(env, undefined, latestCount ? parseInt(latestCount) : 5));
+          return this.addAdminCORSHeaders(await handleBlogs(env, undefined, latestCount ? parseInt(latestCount) : 5), origin);
         default:
+          if (route.startsWith('images/')) {
+            return this.addAdminCORSHeaders(await handleContent(request, env, route), origin);
+          }
           if (route.startsWith('blogs/')) {
             const slug = route.replace('blogs/', '');
-            return this.addCORSHeaders(await handleBlogs(env, slug));
+            return this.addAdminCORSHeaders(await handleBlogs(env, slug), origin);
           }
           if (route.startsWith('stories')) {
             if (route === 'stories') {
-              return this.addCORSHeaders(await handleStories(env));
+              return this.addAdminCORSHeaders(await handleStories(env), origin);
             }
             if (route === 'stories/latest') {
               const latestCount = url.searchParams.get('count');
-              return this.addCORSHeaders(await handleStories(env, undefined, latestCount ? parseInt(latestCount) : 5));
+              return this.addAdminCORSHeaders(await handleStories(env, undefined, latestCount ? parseInt(latestCount) : 5), origin);
             }
             const slug = route.replace('stories/', '');
-            return this.addCORSHeaders(await handleStories(env, slug));
+            return this.addAdminCORSHeaders(await handleStories(env, slug), origin);
           }
           if (route === 'search') {
             const query = url.searchParams.get('q');
-            return this.addCORSHeaders(await handleSearch(env, query || undefined));
+            return this.addAdminCORSHeaders(await handleSearch(env, query || undefined), origin);
           }
-          return this.addCORSHeaders(createErrorResponse('Route not found', 404));
+          return this.addAdminCORSHeaders(createErrorResponse('Route not found', 404), origin);
       }
     } catch (error) {
       console.error('API Error:', error);

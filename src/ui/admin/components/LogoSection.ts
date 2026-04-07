@@ -27,6 +27,8 @@ export class AdminLogoSection extends AdminSection {
 
   render() {
     const logo = this.getContent('logo.svg');
+    const logoUrl = `/api/logo?t=${Date.now()}`;
+
     return html`
       <div class="section">
         <h3>Site Logo</h3>
@@ -34,7 +36,13 @@ export class AdminLogoSection extends AdminSection {
 
         ${logo ? html`
           <div class="current-file">
-            <strong>Current:</strong> logo.svg (${logo.size} bytes)
+            <div class="mb-1">
+              <strong>Current:</strong> logo.svg (${logo.size} bytes)
+            </div>
+            <div style="background: #f0f0f0; padding: 10px; border-radius: 8px; margin-bottom: 10px; display: inline-block;">
+              <img src="${logoUrl}" alt="Current Logo" style="max-height: 100px; display: block;" />
+            </div>
+            <br/>
             <button class="btn-danger" @click=${this.handleDelete}>Delete</button>
           </div>
         ` : ''}
