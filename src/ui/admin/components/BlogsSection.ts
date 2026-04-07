@@ -10,9 +10,10 @@ export class AdminBlogsSection extends AdminSection {
     const slugInput = this.shadowRoot?.querySelector('#blogSlug') as HTMLInputElement;
 
     if (metaInput.files?.[0] && contentInput.files?.[0] && slugInput.value) {
+      const slug = slugInput.value.toLowerCase().trim().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
       try {
-        await this.onUpload(`blogs/${slugInput.value}.json`, metaInput.files[0]);
-        await this.onUpload(`blogs/${slugInput.value}.md`, contentInput.files[0]);
+        await this.onUpload(`blogs/${slug}.json`, metaInput.files[0]);
+        await this.onUpload(`blogs/${slug}.md`, contentInput.files[0]);
         this.onStatusMessage('Upload successful!');
       } catch (e) {
         this.onStatusMessage('Upload failed.');
@@ -38,9 +39,18 @@ export class AdminBlogsSection extends AdminSection {
         <p class="help-text">Each blog needs 2 files: a JSON (metadata) and MD (content) file.</p>
 
         <h4>Upload New Blog</h4>
-        <input type="file" id="blogMetaFile" accept=".json" />
-        <input type="file" id="blogContentFile" accept=".md" />
-        <input type="text" id="blogSlug" placeholder="Slug (e.g., my-new-post)" class="mt-1" />
+        <div class="mb-1">
+          <label style="display:block;margin-bottom:4px;font-weight:500">Metadata (JSON)</label>
+          <input type="file" id="blogMetaFile" accept=".json" />
+        </div>
+        <div class="mb-1">
+          <label style="display:block;margin-bottom:4px;font-weight:500">Content (Markdown)</label>
+          <input type="file" id="blogContentFile" accept=".md" />
+        </div>
+        <div class="mb-1">
+          <label style="display:block;margin-bottom:4px;font-weight:500">URL Slug</label>
+          <input type="text" id="blogSlug" placeholder="Slug (e.g., my-new-post)" />
+        </div>
         <button class="btn-primary" @click=${this.handleUpload}>Upload Blog (JSON + MD)</button>
 
         <div class="file-list">

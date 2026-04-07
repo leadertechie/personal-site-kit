@@ -38,6 +38,19 @@ export async function initializeConfig(infra?: Partial<InfrastructureConfig>): P
   return activeConfig;
 }
 
+export async function refreshConfig(): Promise<WebsiteConfig> {
+  try {
+    const res = await fetch(`${activeConfig.apiUrl}/api/static`);
+    if (res.ok) {
+      const remoteStatic = await res.json().catch(() => ({}));
+      activeConfig = { ...activeConfig, ...remoteStatic };
+    }
+  } catch (e) {
+    console.warn('Failed to refresh static details.');
+  }
+  return activeConfig;
+}
+
 export function getConfig(): WebsiteConfig {
   return activeConfig;
 }

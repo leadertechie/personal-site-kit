@@ -178,8 +178,15 @@ export class AdminPortal extends LitElement {
       await this.apiService.uploadContent(key, file);
       this.statusMessage = 'Upload successful!';
       await this.fetchContent();
+      
+      // Refresh config if static details were updated
+      if (key === 'static-details.json') {
+        const store = SiteStore.getInstance();
+        await store.refresh();
+      }
     } catch (e) {
       this.statusMessage = 'Error uploading.';
+      throw e; // Rethrow to allow caller to handle
     }
   }
 

@@ -1,4 +1,4 @@
-import { StaticDetails, WebsiteConfig, initializeConfig, getConfig } from '../config';
+import { StaticDetails, WebsiteConfig, initializeConfig, getConfig, refreshConfig } from '../config';
 
 export class SiteStore {
   private static instance: SiteStore;
@@ -30,6 +30,14 @@ export class SiteStore {
     if (this.config) {
       this.listeners.forEach(l => l(this.config!));
     }
+  }
+
+  async refresh() {
+    // Re-fetch static details
+    await refreshConfig();
+    // Update our config reference
+    this.config = getConfig();
+    this.notify();
   }
 
   getConfig(): WebsiteConfig {
