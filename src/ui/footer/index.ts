@@ -16,11 +16,19 @@ export class FooterComponent extends LitElement {
   accessor footerLinks: IFooterLink[] = [];
 
   render() {
+    const links = this.footerLinks && this.footerLinks.length > 0 
+      ? this.footerLinks 
+      : [
+          { text: 'LinkedIn', link: 'https://linkedin.com' },
+          { text: 'GitHub', link: 'https://github.com' },
+          { text: 'Email', link: 'mailto:you@example.com' }
+        ];
+
     return html`
       <div class="footer-content">
-        <span>&copy; ${this.copyright}</span>
+        <span>&copy; ${this.copyright || '2026 Personal Site'}</span>
         <span class="links">
-          ${(this.footerLinks || []).map(
+          ${links.map(
             (link) => {
               const isExternal = link.link.startsWith('http') || link.link.startsWith('mailto:');
               return html`<a 

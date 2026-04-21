@@ -29,7 +29,11 @@ export async function initializeConfig(infra?: Partial<InfrastructureConfig>): P
     const res = await fetch(`${activeConfig.apiUrl}/api/static`);
     if (res.ok) {
       const remoteStatic = await res.json().catch(() => ({}));
-      activeConfig = { ...activeConfig, ...remoteStatic };
+      // Filter out undefined/null values from remote config
+      const filteredStatic = Object.fromEntries(
+        Object.entries(remoteStatic).filter(([_, v]) => v != null && v !== '')
+      );
+      activeConfig = { ...activeConfig, ...filteredStatic };
     }
   } catch (e) {
     console.warn('Failed to load static details from R2, using defaults.');

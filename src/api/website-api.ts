@@ -26,29 +26,43 @@ export class WebsiteAPI {
   }
 
   private addAdminCORSHeaders(response: Response, origin: string): Response {
-    const allowOrigin = origin && (origin.includes('localhost') || origin.includes('127.0.0.1')) 
-      ? origin 
-      : 'same-origin';
-    response.headers.set('Access-Control-Allow-Origin', allowOrigin);
-    response.headers.set('Access-Control-Allow-Credentials', 'true');
+    // For admin/sensitive routes, we want to be stricter
+    // Allow localhost/127.0.0.1 for development
+    const isLocal = origin && (origin.includes('localhost') || origin.includes('127.0.0.1'));
+    
+    if (isLocal) {
+      response.headers.set('Access-Control-Allow-Origin', origin);
+      response.headers.set('Access-Control-Allow-Credentials', 'true');
+    } else if (origin) {
+      // In production, we typically want to only allow our own domain.
+      // Since we don't know it here, we'll echo back the origin ONLY if it matches our expectation
+      // For now, we'll stick to a safer default or same-origin behavior
+      // response.headers.set('Access-Control-Allow-Origin', origin); 
+    }
+
     response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
     response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Session-Token');
     return response;
   }
 
   private handleCORS(origin: string): Response {
-    const allowOrigin = origin && (origin.includes('localhost') || origin.includes('127.0.0.1')) 
-      ? origin 
-      : '*';
+    const isLocal = origin && (origin.includes('localhost') || origin.includes('127.0.0.1'));
+    const allowOrigin = isLocal ? origin : '*';
+
+    const headers: Record<string, string> = {
+      'Access-Control-Allow-Origin': allowOrigin,
+      'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Session-Token',
+      'Access-Control-Max-Age': '86400',
+    };
+
+    if (isLocal) {
+      headers['Access-Control-Allow-Credentials'] = 'true';
+    }
+
     return new Response(null, {
-      status: 200,
-      headers: {
-        'Access-Control-Allow-Origin': allowOrigin ,
-        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS' ,
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Session-Token',
-        'Access-Control-Allow-Credentials': 'true',
-        'Access-Control-Max-Age': '86400',
-      },
+      status: 204, // No content for OPTIONS
+      headers,
     });
   }
 
