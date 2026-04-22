@@ -18,6 +18,7 @@ export class WebsitePrerender {
   private copyright: string;
   private templateRenderer: (props: TemplateProps) => Promise<string> | string;
   private apiHandler?: { fetch: (request: Request, env: any, ctx: any) => Promise<Response> | Response };
+  private cachedAssets: { js: string; css: string } | null = null;
 
   constructor(options: PrerenderOptions = {}) {
     this.routes = options.routes || [
@@ -38,13 +39,51 @@ export class WebsitePrerender {
     this.apiHandler = options.apiHandler;
   }
 
+  private async discoverAssets(env: any, baseSiteUrl: string): Promise<{ js: string; css: string }> {
+    if (this.cachedAssets) return this.cachedAssets;
+
+    try {
+      let html: string = '';
+      
+      // 1. Try to get index.html from ASSETS binding (most reliable in Workers/Pages)
+      if (env.ASSETS) {
+        const res = await env.ASSETS.fetch(new Request('http://localhost/index.html'));
+        if (res.ok) html = await res.text();
+      }
+      
+      // 2. Fallback to network fetch if not found via binding
+      if (!html) {
+        const res = await fetch(`${baseSiteUrl}/index.html`, {
+          headers: { 'X-Asset-Discovery': 'true' }
+        });
+        if (res.ok) html = await res.text();
+      }
+
+      if (html) {
+        const jsMatch = html.match(/src="([^"]*assets\/index-[^"]+\.js)"/);
+        const cssMatch = html.match(/href="([^"]*assets\/index-[^"]+\.css)"/);
+        
+        if (jsMatch || cssMatch) {
+          this.cachedAssets = {
+            js: jsMatch ? (jsMatch[1].startsWith('/') ? jsMatch[1] : '/' + jsMatch[1]) : "/assets/index.js",
+            css: cssMatch ? (cssMatch[1].startsWith('/') ? cssMatch[1] : '/' + cssMatch[1]) : "/assets/index.css"
+          };
+          return this.cachedAssets;
+        }
+      }
+    } catch (e) {
+      console.warn("Asset discovery failed:", e);
+    }
+
+    return { js: "/assets/index.js", css: "/assets/index.css" };
+  }
+
   private async fetchStaticDetails(apiUrl: string, env: any) {
     try {
       let data: any;
       
-      // If we have a local API handler, use it instead of network fetch to avoid loops
       if (this.apiHandler) {
-        const res = await this.apiHandler.fetch(new Request(`${apiUrl}/api/static`), env, {});
+        const res = await this.apiHandler.fetch(new Request('http://localhost/api/static'), env, {});
         if (res.ok) data = await res.json();
       } else {
         const res = await fetch(`${apiUrl}/api/static`);
@@ -74,7 +113,7 @@ export class WebsitePrerender {
   private async fetchAboutMeData(apiUrl: string, env: any): Promise<any> {
     try {
       if (this.apiHandler) {
-        const res = await this.apiHandler.fetch(new Request(`${apiUrl}/api/aboutme`), env, {});
+        const res = await this.apiHandler.fetch(new Request('http://localhost/api/aboutme'), env, {});
         if (res.ok) return await res.json();
       } else {
         const res = await fetch(`${apiUrl}/api/aboutme`);
@@ -89,15 +128,25 @@ export class WebsitePrerender {
     const apiUrl = env?.API_URL || `${url.origin}/api`;
     const baseSiteUrl = env?.BASE_SITE_URL || url.origin;
 
-    // Pass through to client-side app for admin route
+    // Admin pass-through
     if (url.pathname === '/admin' || url.pathname.startsWith('/admin/')) {
-      // Fetch the index.html from ASSETS or external source
+      if (env.ASSETS) {
+        const assetRes = await env.ASSETS.fetch(new Request('http://localhost/index.html'));
+        if (assetRes.ok) return assetRes;
+      }
       const templateResponse = await fetch(`${baseSiteUrl}/index.html`);
       if (templateResponse.ok) {
         return new Response(templateResponse.body, {
           headers: { 'content-type': 'text/html' }
         });
       }
+    }
+
+    // Discovery pass-through
+    if (request.headers.get('X-Asset-Discovery') === 'true') {
+       if (env.ASSETS) {
+         return env.ASSETS.fetch(new Request('http://localhost/index.html'));
+       }
     }
 
     await this.fetchStaticDetails(apiUrl, env);
@@ -109,7 +158,6 @@ export class WebsitePrerender {
       return fetch(`${apiUrl}${url.pathname.replace(/^\/api/, '')}${url.search}`);
     }
 
-    // Try to serve from ASSETS binding if available (Cloudflare Pages/Workers)
     if (env.ASSETS && (url.pathname.startsWith('/assets/') || url.pathname === '/favicon.ico' || url.pathname === '/logo.png')) {
       try {
         const assetRes = await env.ASSETS.fetch(request);
@@ -132,7 +180,6 @@ export class WebsitePrerender {
         }
       } catch (e) {}
       
-      // Fallback to API handler if bucket get fails or image not found
       if (this.apiHandler) {
         return this.apiHandler.fetch(request, env, ctx);
       }
@@ -155,10 +202,7 @@ export class WebsitePrerender {
       };
       const contentType = contentTypes[ext || ''] || 'application/octet-stream';
       
-      // Prevent infinite loop if baseSiteUrl is same as current origin
-      if (baseSiteUrl === url.origin) {
-         // If ASSETS check above failed, we can't do much more here without risking loops
-         // unless we are in a build step. For now, 404 to be safe.
+      if (baseSiteUrl === url.origin && !env.ASSETS) {
          return new Response('Asset not found', { status: 404 });
       }
 
@@ -190,8 +234,16 @@ export class WebsitePrerender {
       }
     }
 
+    const assets = await this.discoverAssets(env, baseSiteUrl);
     const pageContent = await generatePageContent(url.pathname, this.routes, this.footerLinks, { ...env, apiUrl, siteTitle: this.siteTitle, copyright: this.copyright });
-    const html = await this.templateRenderer({ ...pageContent, hydrationData: hydrationScript });
+    
+    const html = await this.templateRenderer({ 
+      ...pageContent, 
+      hydrationData: hydrationScript,
+      baseSiteUrl,
+      jsAsset: assets.js,
+      cssAsset: assets.css
+    });
 
     return new Response(html, {
       headers: {
