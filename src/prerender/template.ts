@@ -5,42 +5,59 @@ export interface TemplateProps {
   content: string;
   hydrationData?: string;
   baseSiteUrl?: string;
+  jsAsset?: string;
+  cssAsset?: string;
 }
 
+// In-memory cache for asset paths to avoid infinite recursion and multiple fetches
+let cachedAssets: { js: string; css: string } | null = null;
+let isDiscovering = false;
+
 async function getAssetPaths(baseSiteUrl: string): Promise<{ js: string; css: string }> {
-  // If baseSiteUrl is current origin, we can't fetch / to discover assets without loop risk
-  // In that case, we assume standard naming or wait for a manifest
-  if (baseSiteUrl.includes('localhost') || baseSiteUrl.includes('127.0.0.1')) {
-    // For local dev, we typically use Vite's index.ts which resolves to a predictable bundle
-    // but in prod build, it might have hashes.
+  if (cachedAssets) return cachedAssets;
+  
+  if (isDiscovering) {
+    return { js: "/assets/index.js", css: "/assets/index.css" };
   }
 
-  const assetsUrl = `${baseSiteUrl}/cdn-assets.json`;
+  isDiscovering = true;
+
   try {
+    const assetsUrl = `${baseSiteUrl}/cdn-assets.json`;
     const res = await fetch(assetsUrl);
     if (res.ok) {
       const data = await res.json();
-      return { js: data.js, css: data.css };
+      cachedAssets = { js: data.js, css: data.css };
+      isDiscovering = false;
+      return cachedAssets!;
     }
   } catch (e) {}
   
   try {
-    // Only fetch / if it's NOT the current page to avoid loops
-    // But since this is a template generator, we just try it once.
-    const res = await fetch(`${baseSiteUrl}/?t=${Date.now()}`);
-    const html = await res.text();
-    const jsMatch = html.match(/src="(\/assets\/index-[^"]+\.js)"/);
-    const cssMatch = html.match(/href="(\/assets\/index-[^"]+\.css)"/);
-    
-    if (jsMatch || cssMatch) {
-      return { 
-        js: jsMatch ? jsMatch[1] : "/assets/index.js", 
-        css: cssMatch ? cssMatch[1] : "/assets/index.css" 
-      };
+    // Try to fetch index.html to find hashed asset names
+    const res = await fetch(`${baseSiteUrl}/index.html`);
+    if (res.ok) {
+      const html = await res.text();
+      // Match scripts like /assets/index-HASH.js or assets/index-HASH.js
+      const jsMatch = html.match(/src="([^"]*assets\/index-[^"]+\.js)"/);
+      // Match links like /assets/index-HASH.css or assets/index-HASH.css
+      const cssMatch = html.match(/href="([^"]*assets\/index-[^"]+\.css)"/);
+      
+      if (jsMatch || cssMatch) {
+        cachedAssets = { 
+          js: jsMatch ? (jsMatch[1].startsWith('/') ? jsMatch[1] : '/' + jsMatch[1]) : "/assets/index.js", 
+          css: cssMatch ? (cssMatch[1].startsWith('/') ? cssMatch[1] : '/' + cssMatch[1]) : "/assets/index.css" 
+        };
+        isDiscovering = false;
+        return cachedAssets!;
+      }
     }
-  } catch (e) {}
+  } catch (e) {
+    console.warn("Asset discovery failed:", e);
+  } finally {
+    isDiscovering = false;
+  }
   
-  // Fallback to predictable paths if discovery fails
   return { js: "/assets/index.js", css: "/assets/index.css" };
 }
 
@@ -50,11 +67,20 @@ export const createHtmlTemplate = async ({
   canonicalUrl,
   content,
   hydrationData = "",
-  baseSiteUrl = ""
+  baseSiteUrl = "",
+  jsAsset,
+  cssAsset
 }: TemplateProps): Promise<string> => {
-  // Use the origin of the canonicalUrl as baseSiteUrl if not provided
-  const effectiveBaseUrl = baseSiteUrl || new URL(canonicalUrl).origin;
-  const { js: jsAsset, css: cssAsset } = await getAssetPaths(effectiveBaseUrl);
+  let js = jsAsset;
+  let css = cssAsset;
+
+  // If assets not provided, try to discover them
+  if (!js || !css) {
+    const effectiveBaseUrl = baseSiteUrl || new URL(canonicalUrl).origin;
+    const discovered = await getAssetPaths(effectiveBaseUrl);
+    js = js || discovered.js;
+    css = css || discovered.css;
+  }
   
   return `<!doctype html>
 <html lang="en" data-theme="light">
@@ -69,8 +95,8 @@ export const createHtmlTemplate = async ({
     <meta property="og:description" content="${description}" />
     <meta property="og:url" content="${canonicalUrl}" />
     <link rel="canonical" href="${canonicalUrl}" />
-    <link rel="stylesheet" crossorigin href="${cssAsset}" />
-    <script type="module" crossorigin src="${jsAsset}"></script>
+    <link rel="stylesheet" crossorigin href="${css}" />
+    <script type="module" crossorigin src="${js}"></script>
   </head>
   <body>
     ${hydrationData}

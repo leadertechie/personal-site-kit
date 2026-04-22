@@ -19,7 +19,9 @@ export class WebsiteAPI {
   }
 
   private addCORSHeaders(response: Response): Response {
-    response.headers.set('Access-Control-Allow-Origin', '*' );
+    if (!response.headers.has('Access-Control-Allow-Origin')) {
+      response.headers.set('Access-Control-Allow-Origin', '*' );
+    }
     response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS' );
     response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Session-Token');
     return response;
@@ -30,14 +32,13 @@ export class WebsiteAPI {
     // Allow localhost/127.0.0.1 for development
     const isLocal = origin && (origin.includes('localhost') || origin.includes('127.0.0.1'));
     
-    if (isLocal) {
-      response.headers.set('Access-Control-Allow-Origin', origin);
-      response.headers.set('Access-Control-Allow-Credentials', 'true');
-    } else if (origin) {
-      // In production, we typically want to only allow our own domain.
-      // Since we don't know it here, we'll echo back the origin ONLY if it matches our expectation
-      // For now, we'll stick to a safer default or same-origin behavior
-      // response.headers.set('Access-Control-Allow-Origin', origin); 
+    if (!response.headers.has('Access-Control-Allow-Origin')) {
+      if (isLocal) {
+        response.headers.set('Access-Control-Allow-Origin', origin);
+        response.headers.set('Access-Control-Allow-Credentials', 'true');
+      } else {
+        // Safe default: same-origin
+      }
     }
 
     response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
@@ -119,10 +120,11 @@ export class WebsiteAPI {
             return this.addAdminCORSHeaders(createErrorResponse('Unauthorized', 401), origin);
           }
           clearContentCache();
-          return this.addAdminCORSHeaders(new Response(JSON.stringify({ success: true, message: 'Cache cleared' }), { status: 200 }), origin);
+          return this.addAdminCORSHeaders(new Response(JSON.stringify({ success: true, message: 'Cache cleared' }), { status: 200, headers: { 'Content-Type': 'application/json' } }), origin);
         case 'aboutme':
           return this.addAdminCORSHeaders(await handleAboutMe(env), origin);
         case 'logo':
+          // Logo has its own CORS headers
           return this.addAdminCORSHeaders(await handleLogo(env), origin);
         case 'static':
           return this.addAdminCORSHeaders(await handleStaticDetails(env), origin);
