@@ -85,18 +85,36 @@ export class WebsitePrerender {
   }
 
   public async fetch(request: Request, env: any, ctx: any): Promise<Response> {
-    const apiUrl = env?.API_URL || 'https://api.example.com';
-    const baseSiteUrl = env?.BASE_SITE_URL || 'https://site.example.com';
+    const url = new URL(request.url);
+    const apiUrl = env?.API_URL || `${url.origin}/api`;
+    const baseSiteUrl = env?.BASE_SITE_URL || url.origin;
+
+    // Pass through to client-side app for admin route
+    if (url.pathname === '/admin' || url.pathname.startsWith('/admin/')) {
+      // Fetch the index.html from ASSETS or external source
+      const templateResponse = await fetch(`${baseSiteUrl}/index.html`);
+      if (templateResponse.ok) {
+        return new Response(templateResponse.body, {
+          headers: { 'content-type': 'text/html' }
+        });
+      }
+    }
 
     await this.fetchStaticDetails(apiUrl, env);
-    
-    const url = new URL(request.url);
 
     if (url.pathname.startsWith('/api/')) {
       if (this.apiHandler) {
         return this.apiHandler.fetch(request, env, ctx);
       }
-      return fetch(`${apiUrl}${url.pathname}${url.search}`);
+      return fetch(`${apiUrl}${url.pathname.replace(/^\/api/, '')}${url.search}`);
+    }
+
+    // Try to serve from ASSETS binding if available (Cloudflare Pages/Workers)
+    if (env.ASSETS && (url.pathname.startsWith('/assets/') || url.pathname === '/favicon.ico' || url.pathname === '/logo.png')) {
+      try {
+        const assetRes = await env.ASSETS.fetch(request);
+        if (assetRes.ok) return assetRes;
+      } catch (e) {}
     }
 
     if (url.pathname.startsWith('/images/')) {
@@ -137,7 +155,13 @@ export class WebsitePrerender {
       };
       const contentType = contentTypes[ext || ''] || 'application/octet-stream';
       
-      // In local dev, baseSiteUrl might be localhost:5173 (Vite)
+      // Prevent infinite loop if baseSiteUrl is same as current origin
+      if (baseSiteUrl === url.origin) {
+         // If ASSETS check above failed, we can't do much more here without risking loops
+         // unless we are in a build step. For now, 404 to be safe.
+         return new Response('Asset not found', { status: 404 });
+      }
+
       const response = await fetch(`${baseSiteUrl}${path}`);
       if (response.ok) {
         return new Response(response.body, {
