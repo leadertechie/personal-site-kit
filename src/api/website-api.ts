@@ -75,10 +75,15 @@ export class WebsiteAPI {
     }
 
     const pathname = url.pathname;
-    const route = pathname
-      .replace(/^\/api\//, '')
-      .replace(/^\//, '')
-      .replace(/\/+$/, '');
+    // Normalize route: strip leading /api/, strip leading /, strip trailing /
+    let route = pathname;
+    if (route.startsWith('/api/')) {
+      route = route.substring(5);
+    } else if (route.startsWith('/api')) {
+      route = route.substring(4);
+    }
+    
+    route = route.replace(/^\//, '').replace(/\/+$/, '');
 
     // Check custom handlers first
     if (this.customHandlers.has(route)) {
