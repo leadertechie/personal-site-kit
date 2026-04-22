@@ -7,6 +7,7 @@ export interface PrerenderOptions {
   siteTitle?: string;
   copyright?: string;
   templateRenderer?: (props: TemplateProps) => Promise<string> | string;
+  apiHandler?: { fetch: (request: Request, env: any, ctx: any) => Promise<Response> | Response };
 }
 
 export class WebsitePrerender {
@@ -16,6 +17,7 @@ export class WebsitePrerender {
   private siteTitle: string;
   private copyright: string;
   private templateRenderer: (props: TemplateProps) => Promise<string> | string;
+  private apiHandler?: { fetch: (request: Request, env: any, ctx: any) => Promise<Response> | Response };
 
   constructor(options: PrerenderOptions = {}) {
     this.routes = options.routes || [
@@ -33,13 +35,23 @@ export class WebsitePrerender {
     this.siteTitle = options.siteTitle || 'My Personal Website';
     this.copyright = options.copyright || '2026 My Personal Website';
     this.templateRenderer = options.templateRenderer || createHtmlTemplate;
+    this.apiHandler = options.apiHandler;
   }
 
-  private async fetchStaticDetails(apiUrl: string) {
+  private async fetchStaticDetails(apiUrl: string, env: any) {
     try {
-      const res = await fetch(`${apiUrl}/api/static`);
-      if (res.ok) {
-        const data = await res.json();
+      let data: any;
+      
+      // If we have a local API handler, use it instead of network fetch to avoid loops
+      if (this.apiHandler) {
+        const res = await this.apiHandler.fetch(new Request(`${apiUrl}/api/static`), env, {});
+        if (res.ok) data = await res.json();
+      } else {
+        const res = await fetch(`${apiUrl}/api/static`);
+        if (res.ok) data = await res.json();
+      }
+
+      if (data) {
         this.siteTitle = data.siteTitle || this.siteTitle;
         this.copyright = data.copyright || this.copyright;
         
@@ -59,10 +71,15 @@ export class WebsitePrerender {
     } catch (e) {}
   }
 
-  private async fetchAboutMeData(apiUrl: string): Promise<any> {
+  private async fetchAboutMeData(apiUrl: string, env: any): Promise<any> {
     try {
-      const res = await fetch(`${apiUrl}/api/about-me`);
-      if (res.ok) return await res.json();
+      if (this.apiHandler) {
+        const res = await this.apiHandler.fetch(new Request(`${apiUrl}/api/aboutme`), env, {});
+        if (res.ok) return await res.json();
+      } else {
+        const res = await fetch(`${apiUrl}/api/aboutme`);
+        if (res.ok) return await res.json();
+      }
     } catch (e) {}
     return null;
   }
@@ -71,11 +88,14 @@ export class WebsitePrerender {
     const apiUrl = env?.API_URL || 'https://api.example.com';
     const baseSiteUrl = env?.BASE_SITE_URL || 'https://site.example.com';
 
-    await this.fetchStaticDetails(apiUrl);
+    await this.fetchStaticDetails(apiUrl, env);
     
     const url = new URL(request.url);
 
     if (url.pathname.startsWith('/api/')) {
+      if (this.apiHandler) {
+        return this.apiHandler.fetch(request, env, ctx);
+      }
       return fetch(`${apiUrl}${url.pathname}${url.search}`);
     }
 
@@ -88,10 +108,16 @@ export class WebsitePrerender {
             headers: {
               'content-type': image.httpMetadata?.contentType || 'image/jpeg',
               'cache-control': 'public, max-age=86400',
+              'access-control-allow-origin': '*',
             },
           });
         }
       } catch (e) {}
+      
+      // Fallback to API handler if bucket get fails or image not found
+      if (this.apiHandler) {
+        return this.apiHandler.fetch(request, env, ctx);
+      }
       return new Response('Not found', { status: 404 });
     }
 
@@ -111,6 +137,7 @@ export class WebsitePrerender {
       };
       const contentType = contentTypes[ext || ''] || 'application/octet-stream';
       
+      // In local dev, baseSiteUrl might be localhost:5173 (Vite)
       const response = await fetch(`${baseSiteUrl}${path}`);
       if (response.ok) {
         return new Response(response.body, {
@@ -133,7 +160,7 @@ export class WebsitePrerender {
 
     let hydrationScript = '';
     if (url.pathname === '/about-me' || url.pathname === '/about-me/') {
-      const aboutMeData = await this.fetchAboutMeData(apiUrl);
+      const aboutMeData = await this.fetchAboutMeData(apiUrl, env);
       if (aboutMeData) {
         hydrationScript = `<script>window.__HYDRATION_DATA__ = ${JSON.stringify(aboutMeData)};</script>`;
       }
