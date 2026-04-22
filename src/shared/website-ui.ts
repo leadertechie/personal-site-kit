@@ -45,9 +45,10 @@ export class WebsiteUI {
     });
 
     // 2. Subscribe to changes
-    this.store.subscribe(() => {
+    this.store.subscribe((config) => {
       this.applyTheme();
       this.updateFavicon();
+      this.updateBanner(config);
       
       // Only trigger full re-navigation if NOT on admin page to avoid state reset
       if (this.router && window.location.pathname !== '/admin') {
@@ -58,8 +59,9 @@ export class WebsiteUI {
     // 3. Apply theme overrides if any
     this.applyTheme();
 
-    // 4. Update Favicon
+    // 4. Update elements
     this.updateFavicon();
+    this.updateBanner(this.store.getConfig());
 
     // 5. Setup Router
     this.router = new Router(this);
@@ -71,6 +73,14 @@ export class WebsiteUI {
     }
 
     console.log('WebsiteUI bootstrapped');
+  }
+
+  private updateBanner(config: any) {
+    const banner = document.querySelector('my-banner');
+    if (banner) {
+      banner.setAttribute('header', config.siteTitle || 'My Site');
+      banner.setAttribute('logo', `${config.apiUrl}/api/logo?t=${Date.now()}`);
+    }
   }
 
   private applyTheme() {
