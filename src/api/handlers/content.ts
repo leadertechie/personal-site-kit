@@ -9,6 +9,7 @@ import {
 } from './auth';
 import { clearContentCache as clearHomeCache } from './home';
 import { clearContentCache as clearAboutMeCache } from './about-me';
+import { clearContentCache as clearContentUtilsCache } from '../content-utils';
 
 function getSessionToken(request: Request): string | null {
   const cookieHeader = request.headers.get('Cookie');
@@ -133,6 +134,7 @@ async function handleWrite(request: Request, bucket: any, subpath: string, env: 
       await bucket.put(subpath, request.body, options);
       clearHomeCache();
       clearAboutMeCache();
+      clearContentUtilsCache();
       return createJSONResponse({ success: true, key: subpath });
     } catch (e: any) {
       return createErrorResponse('Failed to upload content: ' + e.message, 500);
@@ -144,6 +146,7 @@ async function handleWrite(request: Request, bucket: any, subpath: string, env: 
       await bucket.delete(subpath);
       clearHomeCache();
       clearAboutMeCache();
+      clearContentUtilsCache();
       return createJSONResponse({ success: true, key: subpath });
     } catch (e: any) {
       return createErrorResponse('Failed to delete content: ' + e.message, 500);
