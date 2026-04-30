@@ -37,7 +37,7 @@ function getLoader(env: any): R2ContentLoader | null {
         cfCache: true,           // Enable Cloudflare edge cache tier
         cfCacheTTL: 300,         // CF cache for 5 minutes
         swrTTL: 30 * 60 * 1000,  // SWR window: 30 minutes
-      } as any,
+      },
       {
         md2html: {
           imagePathPrefix: 'images/',
@@ -50,7 +50,7 @@ function getLoader(env: any): R2ContentLoader | null {
             emitScopeAnchors: true
           }
         }
-      } as any
+      }
     );
   }
   return loader;
