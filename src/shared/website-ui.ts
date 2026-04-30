@@ -1,6 +1,7 @@
 import { SiteStore } from './core/site-store';
 import { IRoute } from './interfaces/iroute';
 import { Router } from './router';
+import { init as md2interactInit, reinit as md2interactReinit } from '@leadertechie/md2interact';
 
 export interface UIConfig {
   apiUrl?: string;
@@ -14,6 +15,14 @@ export interface UIConfig {
     customCss?: string;
   };
   onBootstrap?: (ui: WebsiteUI) => void | Promise<void>;
+  interactConfig?: {
+    interactions?: Record<string, { selector: string }>;
+    cssHydration?: {
+      inlineCritical?: boolean;
+      layerInjection?: boolean;
+      themeToggle?: boolean;
+    };
+  };
 }
 
 export class WebsiteUI {
@@ -21,6 +30,7 @@ export class WebsiteUI {
   private store: SiteStore;
   private config: UIConfig;
   private router: Router | null = null;
+  private interactInitialized = false;
 
   private constructor(config: UIConfig = {}) {
     this.store = SiteStore.getInstance();
@@ -67,12 +77,52 @@ export class WebsiteUI {
     this.router = new Router(this);
     this.router.init(this.config.appElementId || 'app');
     
-    // 6. Run bootstrap hook
+    // 6. Initialize md2interact for client-side DOM interactions
+    this.initInteract();
+
+    // 7. Run bootstrap hook
     if (this.config.onBootstrap) {
       await this.config.onBootstrap(this);
     }
 
     console.log('WebsiteUI bootstrapped');
+  }
+
+  /**
+   * Initialize md2interact for client-side DOM interactions,
+   * CSS hydration, and event bus communication.
+   */
+  private initInteract() {
+    if (this.interactInitialized) return;
+    
+    const interactCfg = this.config.interactConfig || {};
+    
+    md2interactInit({
+      interactions: interactCfg.interactions || {
+        'poll': { selector: '[data-interact="poll"]' },
+        'live-update': { selector: '[data-interact="live-update"]' },
+        'click-toggle': { selector: '[data-interact="click-toggle"]' },
+        'infinite-scroll': { selector: '[data-interact="infinite-scroll"]' },
+        'form-live': { selector: '[data-interact="form-live"]' }
+      },
+      cssHydration: interactCfg.cssHydration || {
+        inlineCritical: true,
+        layerInjection: true,
+        themeToggle: true
+      }
+    });
+    
+    this.interactInitialized = true;
+  }
+
+  /**
+   * Reinitialize md2interact after dynamic content changes (e.g., SPA navigation).
+   * This re-scans the DOM for new interaction elements.
+   */
+  public reinitInteract() {
+    if (this.interactInitialized) {
+      md2interactReinit();
+    }
   }
 
   private updateBanner(config: any) {

@@ -15,7 +15,7 @@ export default defineConfig({
       formats: ['es']
     },
     rollupOptions: {
-      external: ['lit', 'lit/decorators.js', '@leadertechie/md2html', '@leadertechie/r2tohtml'],
+      external: ['lit', 'lit/decorators.js', '@leadertechie/md2html', '@leadertechie/md2interact', '@leadertechie/r2tohtml'],
       output: {
         entryFileNames: '[name].js',
         chunkFileNames: 'chunks/[name]-[hash].js',

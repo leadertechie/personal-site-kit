@@ -21,11 +21,25 @@ export interface ContentMetadata {
   author?: string;
 }
 
+// Use PipelineConfigV2 features: slot patterns, error recovery, scope anchors
 const pipeline = new MarkdownPipeline({
   imagePathPrefix: 'images/',
+  preserveRawHTML: true,
+  errorRecovery: 'warn',
+  maxRecursionDepth: 50,
   styleOptions: {
     classPrefix: 'md-',
-    addHeadingIds: true
+    addHeadingIds: true,
+    emitScopeAnchors: true
+  },
+  slotPattern: /\[\[(.*?)\]\]/g,
+  onSlot: (name: string) => {
+    // Resolve known slot placeholders at render time
+    const slotMap: Record<string, string> = {
+      'SITE_TITLE': document?.querySelector('title')?.textContent || 'My Site',
+      'CURRENT_YEAR': new Date().getFullYear().toString(),
+    };
+    return slotMap[name] || `[[${name}]]`;
   }
 });
 

@@ -4,11 +4,23 @@ import { MarkdownPipeline } from '@leadertechie/r2tohtml';
 
 import { storyviewerStyles } from './styles';
 
+// Use PipelineConfigV2 with scope anchors, error recovery, and slot patterns
 const pipeline = new MarkdownPipeline({
   imagePathPrefix: 'images/',
+  preserveRawHTML: true,
+  errorRecovery: 'warn',
+  maxRecursionDepth: 50,
   styleOptions: {
     classPrefix: 'md-',
-    addHeadingIds: true
+    addHeadingIds: true,
+    emitScopeAnchors: true
+  },
+  slotPattern: /\[\[(.*?)\]\]/g,
+  onSlot: (name: string) => {
+    const slotMap: Record<string, string> = {
+      'CURRENT_YEAR': new Date().getFullYear().toString(),
+    };
+    return slotMap[name] || `[[${name}]]`;
   }
 });
 

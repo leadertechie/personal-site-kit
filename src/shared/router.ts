@@ -157,6 +157,14 @@ export class Router {
     canonicalLink.setAttribute('href', url);
   }
 
+  /**
+   * After rendering new content, reinitialize md2interact so it
+   * re-scans the DOM for interaction elements (poll, live-update, etc.)
+   */
+  private afterRender() {
+    this.ui.reinitInteract();
+  }
+
   private async renderHomePage() {
     let blogs: ContentMetadata[] = [];
     let stories: ContentMetadata[] = [];
@@ -189,6 +197,7 @@ export class Router {
     });
     if (this.appElement) this.appElement.innerHTML = pageContent.content;
     this.setPageMeta(pageContent.title, pageContent.description, pageContent.canonicalUrl);
+    this.afterRender();
   }
 
   private renderAboutMePage() {
@@ -197,6 +206,7 @@ export class Router {
     });
     if (this.appElement) this.appElement.innerHTML = pageContent.content;
     this.setPageMeta(pageContent.title, pageContent.description, pageContent.canonicalUrl);
+    this.afterRender();
   }
 
   private async renderContentListPage(pathname: string) {
@@ -214,6 +224,7 @@ export class Router {
     });
     if (this.appElement) this.appElement.innerHTML = pageContent.content;
     this.setPageMeta(pageContent.title, pageContent.description, pageContent.canonicalUrl);
+    this.afterRender();
   }
 
   private async renderContentDetailPage(pathname: string) {
@@ -233,6 +244,7 @@ export class Router {
     });
     if (this.appElement) this.appElement.innerHTML = pageContent.content;
     this.setPageMeta(`${slug.replace(/-/g, ' ')} - ${this.siteTitle}`, 'Read more content', window.location.href);
+    this.afterRender();
   }
 
   private async renderAdminPage() {
@@ -255,5 +267,6 @@ export class Router {
         <my-footer copyright="${this.copyright}" footerLinks='${JSON.stringify(this.footerLinks)}'></my-footer>
       `;
     }
+    this.afterRender();
   }
 }
