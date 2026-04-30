@@ -97,6 +97,26 @@ export const createHtmlTemplate = async ({
     <link rel="canonical" href="${canonicalUrl}" />
     <link rel="stylesheet" crossorigin href="${css}" />
     <script type="module" crossorigin src="${js}"></script>
+    <!-- md2interact: client-side DOM interactions, CSS hydration, and event bus -->
+    <script type="module">
+      import { init } from '@leadertechie/md2interact';
+      document.addEventListener('DOMContentLoaded', () => {
+        init({
+          interactions: {
+            'poll': { selector: '[data-interact="poll"]' },
+            'live-update': { selector: '[data-interact="live-update"]' },
+            'click-toggle': { selector: '[data-interact="click-toggle"]' },
+            'infinite-scroll': { selector: '[data-interact="infinite-scroll"]' },
+            'form-live': { selector: '[data-interact="form-live"]' }
+          },
+          cssHydration: {
+            inlineCritical: true,
+            layerInjection: true,
+            themeToggle: true
+          }
+        });
+      });
+    </script>
   </head>
   <body>
     ${hydrationData}

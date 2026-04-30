@@ -1,3 +1,5 @@
+import { init as initInteract, reinit as reinitInteract } from '@leadertechie/md2interact';
+
 export class ThemeToggle extends HTMLElement {
   constructor() {
     super();
@@ -27,13 +29,12 @@ export class ThemeToggle extends HTMLElement {
             cursor: pointer;
             font-size: 1.5rem;
             padding: 0.5rem;
-            color: var(--text-color, #213547); /* Default for light mode */
+            color: var(--text-color, #213547);
             transition: color 0.3s ease;
           }
           button:hover {
-            color: var(--primary-color, #747bff); /* Hover color */
+            color: var(--primary-color, #747bff);
           }
-          /* Dark mode specific styles for the button */
           html[data-theme='dark'] button {
             color: var(--dark-mode-text-color, rgba(255, 255, 255, 0.87));
           }
@@ -42,7 +43,7 @@ export class ThemeToggle extends HTMLElement {
           }
         </style>
         <button id="theme-toggle" aria-label="Toggle theme">
-          <span class="icon">${this.getSunIcon()}</span> <!-- Default to sun for light mode -->
+          <span class="icon">${this.getSunIcon()}</span>
         </button>
       `;
     }

@@ -43,8 +43,9 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@leadertechie/md2html": "^0.1.0-alpha.13",
-    "@leadertechie/r2tohtml": "^0.1.0-alpha.12",
+    "@leadertechie/md2html": "^0.1.0-alpha.14",
+    "@leadertechie/md2interact": "^0.1.0-alpha.1",
+    "@leadertechie/r2tohtml": "^0.1.0-alpha.13",
     "lit": "^3.2.1"
   },
   "devDependencies": {

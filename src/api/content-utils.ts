@@ -1,4 +1,5 @@
 import { createJSONResponse, createErrorResponse } from './utils';
+import { ContentCacheV2 } from '@leadertechie/r2tohtml';
 
 export interface ContentMetadata {
   slug: string;
@@ -19,28 +20,38 @@ export interface StoryPost extends ContentMetadata {
   content: string;
 }
 
-// In-memory cache for content (reduces R2 reads)
-const contentCache = new Map<string, { data: any; timestamp: number }>();
-const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+// Use ContentCacheV2 with SWR for stale-while-revalidate caching
+const contentCache = new ContentCacheV2(
+  5 * 60 * 1000,   // TTL: 5 minutes fresh
+  true,             // enabled
+  30 * 60 * 1000    // SWR TTL: 30 minutes stale window
+);
 
 export function getCachedOrFetch<T>(key: string, fetchFn: () => Promise<T>): Promise<T> {
   const cached = contentCache.get(key);
-  if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+  if (cached) {
+    if (!cached.stale) {
+      // Fresh cache hit - return immediately
+      return Promise.resolve(cached.data as T);
+    }
+    // Stale cache hit - trigger background revalidation and return stale data
+    fetchFn().then(data => {
+      contentCache.set(key, data);
+      contentCache.refresh(key);
+    }).catch(() => {
+      // Revalidation failed, keep stale data
+    });
     return Promise.resolve(cached.data as T);
   }
   return fetchFn().then(data => {
-    contentCache.set(key, { data, timestamp: Date.now() });
+    contentCache.set(key, data);
     return data;
   });
 }
 
 export function clearContentCache(prefix?: string): void {
   if (prefix) {
-    for (const key of contentCache.keys()) {
-      if (key.startsWith(prefix)) {
-        contentCache.delete(key);
-      }
-    }
+    contentCache.clearPrefix(prefix);
   } else {
     contentCache.clear();
   }

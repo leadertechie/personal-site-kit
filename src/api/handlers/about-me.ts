@@ -1,6 +1,6 @@
 // Simple JSON response handler for Cloudflare Workers
 
-import { R2ContentLoader, type ContentNode } from '@leadertechie/r2tohtml';
+import { R2ContentLoader, ContentCacheV2, type ContentNode } from '@leadertechie/r2tohtml';
 
 interface Profile {
   name: string;
@@ -17,6 +17,13 @@ interface AboutMeApiResponse {
 
 let loader: R2ContentLoader | null = null;
 
+// Use ContentCacheV2 with SWR for stale-while-revalidate caching
+const swrCache = new ContentCacheV2(
+  5 * 60 * 1000,   // TTL: 5 minutes fresh
+  true,             // enabled
+  30 * 60 * 1000    // SWR TTL: 30 minutes stale window
+);
+
 function getLoader(env: any): R2ContentLoader | null {
   if (!env?.CONTENT_BUCKET) {
     return null;
@@ -27,16 +34,23 @@ function getLoader(env: any): R2ContentLoader | null {
       {
         bucket: env.CONTENT_BUCKET,
         cacheTTL: 5 * 60 * 1000,
-      },
+        cfCache: true,           // Enable Cloudflare edge cache tier
+        cfCacheTTL: 300,         // CF cache for 5 minutes
+        swrTTL: 30 * 60 * 1000,  // SWR window: 30 minutes
+      } as any,
       {
         md2html: {
           imagePathPrefix: 'images/',
+          preserveRawHTML: true,
+          errorRecovery: 'warn',
+          maxRecursionDepth: 50,
           styleOptions: {
             classPrefix: 'md-',
-            addHeadingIds: true
+            addHeadingIds: true,
+            emitScopeAnchors: true
           }
         }
-      }
+      } as any
     );
   }
   return loader;

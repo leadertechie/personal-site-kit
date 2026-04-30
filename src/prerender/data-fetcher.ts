@@ -1,4 +1,4 @@
-import { R2ContentLoader } from "@leadertechie/r2tohtml";
+import { R2ContentLoader, ContentCacheV2 } from "@leadertechie/r2tohtml";
 
 export interface Profile {
   name: string;
@@ -17,12 +17,37 @@ export interface BlogMeta {
 
 let loader: R2ContentLoader | null = null;
 
+// Use ContentCacheV2 with SWR support for stale-while-revalidate caching
+const swrCache = new ContentCacheV2(
+  5 * 60 * 1000,   // TTL: 5 minutes fresh
+  true,             // enabled
+  30 * 60 * 1000    // SWR TTL: 30 minutes stale window
+);
+
 function getLoader(env: any): R2ContentLoader | null {
   if (!loader) {
     if (!env?.CONTENT_BUCKET) return null;
     loader = new R2ContentLoader(
-      { bucket: env.CONTENT_BUCKET, cacheTTL: 5 * 60 * 1000 },
-      { md2html: { imagePathPrefix: "images/", styleOptions: { classPrefix: "md-", addHeadingIds: true } } }
+      {
+        bucket: env.CONTENT_BUCKET,
+        cacheTTL: 5 * 60 * 1000,
+        cfCache: true,           // Enable Cloudflare edge cache tier
+        cfCacheTTL: 300,         // CF cache for 5 minutes
+        swrTTL: 30 * 60 * 1000,  // SWR window: 30 minutes
+      } as any,
+      {
+        md2html: {
+          imagePathPrefix: "images/",
+          preserveRawHTML: true,
+          errorRecovery: "warn",
+          maxRecursionDepth: 50,
+          styleOptions: {
+            classPrefix: "md-",
+            addHeadingIds: true,
+            emitScopeAnchors: true
+          }
+        }
+      } as any
     );
   }
   return loader;
