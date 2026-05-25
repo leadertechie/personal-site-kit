@@ -1,6 +1,6 @@
 // Simple JSON response handler for Cloudflare Workers
 
-import { R2ContentLoader, ContentCacheV2, type ContentNode } from '@leadertechie/r2tohtml';
+import { R2ContentLoader, type ContentNode } from '@leadertechie/r2tohtml';
 
 interface Profile {
   name: string;
@@ -16,13 +16,6 @@ interface AboutMeApiResponse {
 }
 
 let loader: R2ContentLoader | null = null;
-
-// Use ContentCacheV2 with SWR for stale-while-revalidate caching
-const swrCache = new ContentCacheV2(
-  5 * 60 * 1000,   // TTL: 5 minutes fresh
-  true,             // enabled
-  30 * 60 * 1000    // SWR TTL: 30 minutes stale window
-);
 
 function getLoader(env: any): R2ContentLoader | null {
   if (!env?.CONTENT_BUCKET) {

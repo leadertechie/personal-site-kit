@@ -6,7 +6,7 @@ const DEFAULT_STATIC_DETAILS = {
   email: "yourname@domain.com"
 };
 
-export async function handleStaticDetails(env?: any, method?: string, body?: any): Promise<Response> {
+export async function handleStaticDetails(env?: any, method?: string, _body?: any): Promise<Response> {
   try {
     if (!env?.CONTENT_BUCKET) {
       return new Response(JSON.stringify(DEFAULT_STATIC_DETAILS), {

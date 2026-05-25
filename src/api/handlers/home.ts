@@ -1,6 +1,6 @@
 // Home page content handler
 
-import { R2ContentLoader, ContentCacheV2, type ContentNode } from '@leadertechie/r2tohtml';
+import { R2ContentLoader, type ContentNode } from '@leadertechie/r2tohtml';
 
 interface HomeApiResponse {
   contentNodes: ContentNode[];
@@ -9,13 +9,6 @@ interface HomeApiResponse {
 }
 
 let loader: R2ContentLoader | null = null;
-
-// Use ContentCacheV2 with SWR for stale-while-revalidate caching
-const swrCache = new ContentCacheV2(
-  5 * 60 * 1000,   // TTL: 5 minutes fresh
-  true,             // enabled
-  30 * 60 * 1000    // SWR TTL: 30 minutes stale window
-);
 
 function getLoader(env: any): R2ContentLoader {
   if (!loader && env?.CONTENT_BUCKET) {
@@ -60,8 +53,8 @@ export async function handleHome(env?: any): Promise<Response> {
 
     const r2 = getLoader(env);
     
-    let astResult = await r2.getWithAST('pages/home.md');
-    let renderedResult = await r2.getRendered('pages/home.md');
+    const astResult = await r2.getWithAST('pages/home.md');
+    const renderedResult = await r2.getRendered('pages/home.md');
     
      if (!astResult || !renderedResult) {
       return new Response(JSON.stringify({

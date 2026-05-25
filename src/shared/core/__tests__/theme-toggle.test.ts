@@ -138,7 +138,7 @@ describe('ThemeToggle', () => {
     expect(localStorageMock.getItem).toHaveBeenCalledWith('theme');
   });
 
-  it('should dispatch a \"theme-changed\" event on theme change', async () => {
+  it('should dispatch a "theme-changed" event on theme change', async () => {
     const dispatchSpy = vi.spyOn(element, 'dispatchEvent');
     const button = element.shadowRoot?.querySelector('#theme-toggle') as HTMLButtonElement;
 

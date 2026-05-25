@@ -1,13 +1,11 @@
 import { createJSONResponse, createErrorResponse } from '../utils';
-import { 
-  setupAuth, 
-  getAuthStore,
+import {
+  setupAuth,
   checkRateLimit,
   recordFailedAttempt,
   clearRateLimit,
   verifyCredentials,
-  getClientIP,
-  MAX_ATTEMPTS
+  getClientIP
 } from './auth';
 
 function createSessionCookie(token: string, origin: string): string {
@@ -25,7 +23,6 @@ function createSessionCookie(token: string, origin: string): string {
 }
 
 export async function handleAuth(request: Request, env: any, subpath: string): Promise<Response> {
-  const method = request.method;
   const clientIP = getClientIP(request);
   const path = subpath.replace(/^\//, '').split('/')[0];
   const origin = request.headers.get('Origin') || new URL(request.url).origin;

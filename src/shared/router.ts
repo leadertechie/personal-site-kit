@@ -248,11 +248,6 @@ export class Router {
   }
 
   private async renderAdminPage() {
-    // Admin portal should be lazy loaded or integrated
-    const pageContent = generatePageContent('/admin', this.routes, this.footerLinks, { 
-      siteTitle: this.siteTitle, copyright: this.copyright 
-    });
-    
     if (this.appElement) {
       this.appElement.innerHTML = `
         <my-banner header="${this.siteTitle}" logo="${this.logo}">

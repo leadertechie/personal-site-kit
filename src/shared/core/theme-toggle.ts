@@ -1,5 +1,3 @@
-import { init as initInteract, reinit as reinitInteract } from '@leadertechie/md2interact';
-
 export class ThemeToggle extends HTMLElement {
   constructor() {
     super();

@@ -1,4 +1,4 @@
-import { R2ContentLoader, ContentCacheV2 } from "@leadertechie/r2tohtml";
+import { R2ContentLoader } from "@leadertechie/r2tohtml";
 
 interface Profile {
   name: string;
@@ -33,13 +33,6 @@ interface BlogMeta {
 }
 
 let loader: R2ContentLoader | null = null;
-
-// Use ContentCacheV2 with SWR for stale-while-revalidate caching
-const swrCache = new ContentCacheV2(
-  5 * 60 * 1000,   // TTL: 5 minutes fresh
-  true,             // enabled
-  30 * 60 * 1000    // SWR TTL: 30 minutes stale window
-);
 
 function getLoader(env: any): R2ContentLoader | null {
   if (!loader) {
@@ -78,15 +71,6 @@ async function fetchProfile(env: any): Promise<Profile | null> {
     if (!obj) return null;
     return await obj.json() as Profile;
   } catch { return null; }
-}
-
-async function fetchAboutMe(env: any): Promise<string> {
-  try {
-    const r2 = getLoader(env);
-    if (!r2) return "";
-    const result = await r2.getRendered("about-me.md");
-    return result?.content || "";
-  } catch { return ""; }
 }
 
 async function fetchHome(env: any): Promise<string> {
@@ -157,20 +141,17 @@ export const generatePageContent = async (
   } catch (e) {}
   
   let profile: Profile | null = null;
-  let aboutMeContent = "";
   let homeContent = "";
   let latestBlogs: BlogMeta[] = [];
   let latestStories: BlogMeta[] = [];
 
   if (env?.CONTENT_BUCKET) {
-    [profile, aboutMeContent, homeContent, latestBlogs, latestStories] = await Promise.all([
-      fetchProfile(env), fetchAboutMe(env), fetchHome(env), fetchLatestBlogSummaries(env, 3), fetchLatestStorySummaries(env, 3)
+    [profile, homeContent, latestBlogs, latestStories] = await Promise.all([
+      fetchProfile(env), fetchHome(env), fetchLatestBlogSummaries(env, 3), fetchLatestStorySummaries(env, 3)
     ]);
   }
 
   const name = profile?.name || "User";
-  const title = profile?.title || "Professional";
-  const canonicalUrl = new URL(pathname, baseUrl).toString();
 
   // Strategy pattern: map pathname patterns to generators
   const strategies = {
