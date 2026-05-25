@@ -1,4 +1,4 @@
-import { R2ContentLoader, ContentCacheV2 } from "@leadertechie/r2tohtml";
+import { R2ContentLoader } from "@leadertechie/r2tohtml";
 
 export interface Profile {
   name: string;
@@ -16,13 +16,6 @@ export interface BlogMeta {
 }
 
 let loader: R2ContentLoader | null = null;
-
-// Use ContentCacheV2 with SWR support for stale-while-revalidate caching
-const swrCache = new ContentCacheV2(
-  5 * 60 * 1000,   // TTL: 5 minutes fresh
-  true,             // enabled
-  30 * 60 * 1000    // SWR TTL: 30 minutes stale window
-);
 
 function getLoader(env: any): R2ContentLoader | null {
   if (!loader) {

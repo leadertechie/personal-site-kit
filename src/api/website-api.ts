@@ -7,7 +7,6 @@ import { handleAuth } from './handlers/auth-handler';
 import { handleBlogs, handleStories, handleSearch } from './handlers/content-api';
 import { handleLogo } from './handlers/logo';
 import { handleStaticDetails } from './handlers/static-details';
-import { getAuthStore } from './handlers/auth';
 
 export type APIHandler = (request: Request, env: any) => Promise<Response>;
 
@@ -110,7 +109,7 @@ export class WebsiteAPI {
           return this.addCORSHeaders(await handleInfo());
         case 'home':
           return this.addAdminCORSHeaders(await handleHome(env), origin);
-        case 'cache-clear':
+        case 'cache-clear': {
           const cookieHeader = request.headers.get('Cookie');
           const sessionToken = cookieHeader?.split(';')
             .find(c => c.trim().startsWith('session='))
@@ -121,6 +120,7 @@ export class WebsiteAPI {
           }
           clearContentCache();
           return this.addAdminCORSHeaders(new Response(JSON.stringify({ success: true, message: 'Cache cleared' }), { status: 200, headers: { 'Content-Type': 'application/json' } }), origin);
+        }
         case 'aboutme':
           return this.addAdminCORSHeaders(await handleAboutMe(env), origin);
         case 'logo':
@@ -130,9 +130,10 @@ export class WebsiteAPI {
           return this.addAdminCORSHeaders(await handleStaticDetails(env), origin);
         case 'blogs':
           return this.addAdminCORSHeaders(await handleBlogs(env), origin);
-        case 'blogs/latest':
+        case 'blogs/latest': {
           const latestCount = url.searchParams.get('count');
           return this.addAdminCORSHeaders(await handleBlogs(env, undefined, latestCount ? parseInt(latestCount) : 5), origin);
+        }
         default:
           if (route.startsWith('images/')) {
             return this.addAdminCORSHeaders(await handleContent(request, env, route), origin);

@@ -1,4 +1,4 @@
-import { LitElement, html, css } from 'lit';
+import { LitElement, html } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { MarkdownPipeline } from '@leadertechie/r2tohtml';
 
@@ -126,7 +126,6 @@ export class StoryViewer extends LitElement {
 
   private renderMarkdown(content: string): string {
     if (!content) return '';
-    const nodes = pipeline.parse(content);
-    return pipeline.render(nodes);
+    return pipeline.renderMarkdown(content);
   }
 }

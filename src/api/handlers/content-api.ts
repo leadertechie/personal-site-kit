@@ -7,9 +7,6 @@ import {
   fetchContentItem,
   fetchContentList,
   searchContent,
-  clearContentCache,
-  type BlogPost,
-  type StoryPost
 } from '../content-utils';
 
 export async function handleBlogs(env?: any, slug?: string, latest?: number): Promise<Response> {

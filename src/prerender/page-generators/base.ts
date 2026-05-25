@@ -42,10 +42,6 @@ export class BasePageGenerator {
       </my-footer>`;
   }
 
-  protected generateMeta(title: string, description: string, canonicalUrl: string): void {
-    // This would be handled in the main function
-  }
-
   protected wrapContent(banner: string, mainContent: string, footer: string): string {
     return `${banner}${mainContent}${footer}`;
   }

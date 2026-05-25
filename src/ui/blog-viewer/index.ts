@@ -1,6 +1,6 @@
-import { LitElement, html, css } from 'lit';
+import { LitElement, html } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
-import { MarkdownPipeline, ContentNode } from '@leadertechie/r2tohtml';
+import { MarkdownPipeline } from '@leadertechie/r2tohtml';
 
 import { blogviewerStyles } from './styles';
 
@@ -132,7 +132,6 @@ export class BlogViewer extends LitElement {
 
   renderMarkdown(content: string): string {
     if (!content) return '';
-    const nodes = pipeline.parse(content);
-    return pipeline.render(nodes);
+    return pipeline.renderMarkdown(content);
   }
 }

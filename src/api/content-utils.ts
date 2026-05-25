@@ -1,5 +1,5 @@
-import { createJSONResponse, createErrorResponse } from './utils';
-import { ContentCacheV2 } from '@leadertechie/r2tohtml';
+import { createErrorResponse } from './utils';
+import { ContentCacheV2, parseFrontmatter as parseFrontmatterPkg } from '@leadertechie/r2tohtml';
 
 export interface ContentMetadata {
   slug: string;
@@ -58,33 +58,10 @@ export function clearContentCache(prefix?: string): void {
 }
 
 export function parseFrontmatter(content: string): { metadata: ContentMetadata; content: string } {
-  const lines = content.split('\n');
-  const metadata: Record<string, string | string[]> = {};
-  let contentStart = 0;
-
-  if (lines[0]?.trim() === '---') {
-    for (let i = 1; i < lines.length; i++) {
-      if (lines[i]?.trim() === '---') {
-        contentStart = i + 1;
-        break;
-      }
-      const colonIdx = lines[i].indexOf(':');
-      if (colonIdx > 0) {
-        const key = lines[i].slice(0, colonIdx).trim();
-        let value = lines[i].slice(colonIdx + 1).trim();
-        if (value.startsWith('[') && value.endsWith(']')) {
-          value = value.slice(1, -1);
-          metadata[key] = value.split(',').map(v => v.trim());
-        } else {
-          metadata[key] = value;
-        }
-      }
-    }
-  }
-
+  const parsed = parseFrontmatterPkg(content);
   return {
-    metadata: metadata as unknown as ContentMetadata,
-    content: lines.slice(contentStart).join('\n').trim()
+    metadata: parsed.metadata as unknown as ContentMetadata,
+    content: parsed.content.trim()
   };
 }
 

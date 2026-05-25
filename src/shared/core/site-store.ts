@@ -1,4 +1,4 @@
-import { StaticDetails, WebsiteConfig, initializeConfig, getConfig, refreshConfig } from '../config';
+import { WebsiteConfig, initializeConfig, getConfig, refreshConfig } from '../config';
 
 export class SiteStore {
   private static instance: SiteStore;
