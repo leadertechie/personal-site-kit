@@ -5,7 +5,8 @@ import {
   recordFailedAttempt,
   clearRateLimit,
   verifyCredentials,
-  getClientIP
+  getClientIP,
+  getAuthStore
 } from './auth';
 
 function createSessionCookie(token: string, origin: string): string {
