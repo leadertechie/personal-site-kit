@@ -25,7 +25,11 @@ export class MyBanner extends LitElement {
     return html`
       <header class="banner banner-component">
         <div class="header-content">
-          ${this.logo ? html`<img src="${this.logo}" alt="Logo" class="logo" />` : ''}
+          ${this.logo ? html`
+            <a href="/" data-route="home" class="logo-link">
+              <img src="${this.logo}" alt="Logo" class="logo" />
+            </a>
+          ` : ''}
           <h1>${this.header}</h1>
         </div>
         <div class="nav-and-theme">

@@ -30,10 +30,18 @@ export const bannerStyles = css`
   margin-right: auto;
 }
 
+.logo-link {
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+  cursor: pointer;
+}
+
 .logo {
   height: 50px;
   margin-right: 1rem;
   width: auto;
+  cursor: pointer;
 }
 
 /* Logo dark mode - invert colors for better contrast */
