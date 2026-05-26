@@ -63,7 +63,10 @@ export class Router {
 
   private setupEventListeners() {
     document.body.addEventListener('click', (event) => {
-      const target = (event.target as HTMLElement).closest('a[data-route]');
+      const path = event.composedPath();
+      const target = path.find(
+        (el) => el instanceof HTMLElement && (el.matches('a[data-route]') || el.closest('a[data-route]'))
+      ) as HTMLElement | undefined;
       if (target) {
         event.preventDefault();
         const route = target.getAttribute('href');
