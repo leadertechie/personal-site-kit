@@ -12,67 +12,79 @@ export class AdminLoginForm extends LitElement {
 
     .container {
       width: 100%;
-      max-width: 900px;
+      max-width: var(--content-medium, 960px);
       margin: 0 auto;
-      padding: 1rem;
+      padding: var(--space-md, 1lh);
     }
 
     .login-box {
-      border: 1px solid var(--border-color, #e0e0e0);
-      padding: 3rem 2.5rem;
-      border-radius: 16px;
+      border: 1px solid var(--border-subtle, #e5e7eb);
+      padding: var(--space-xl, 3lh) var(--space-lg, 2lh);
+      border-radius: var(--radius-xl, 1rem);
       width: 100%;
       max-width: 420px;
       margin: 80px auto;
       text-align: center;
-      background: var(--card-bg, #fff);
-      box-shadow: 0 4px 6px rgba(0,0,0,0.07), 0 10px 20px rgba(0,0,0,0.05);
+      background: var(--bg-primary, #ffffff);
+      box-shadow: var(--shadow-md, 0 4px 6px -2px oklch(0% 0 0 / 0.06));
     }
 
     .login-box h2 {
-      margin: 0 0 0.5rem 0;
-      font-size: 1.75rem;
-      font-weight: 600;
-      color: var(--text-color, #213547);
+      margin: 0 0 var(--space-sm, 0.5lh) 0;
+      font-size: var(--font-size-h2, clamp(1.35rem, 2.25vw, 1.75rem));
+      font-weight: var(--font-weight-semibold, 600);
+      color: var(--text-primary, #0b1120);
     }
 
     .login-box p {
-      color: var(--secondary-text, #666);
-      margin-bottom: 1.5rem;
+      color: var(--text-secondary, #475569);
+      margin-bottom: var(--space-md, 1lh);
     }
 
     input {
       width: 100%;
-      padding: 10px;
-      margin-bottom: 20px;
-      border: 1px solid var(--border-color);
-      border-radius: 4px;
-      background: var(--background-color);
-      color: var(--text-color);
+      padding: var(--space-sm, 0.5lh) var(--space-md, 1lh);
+      margin-bottom: var(--space-sm, 0.5lh);
+      border: 1.5px solid var(--border-subtle, #e5e7eb);
+      border-radius: var(--radius-md, 0.5rem);
+      background: var(--bg-primary, #ffffff);
+      color: var(--text-primary, #0b1120);
+      font-size: var(--font-size-body, clamp(0.9375rem, 1.15vw, 1rem));
       box-sizing: border-box;
+      transition: border-color var(--transition-fast, 0.15s ease),
+                  box-shadow var(--transition-fast, 0.15s ease);
+    }
+
+    input:focus {
+      outline: none;
+      border-color: var(--brand-color, #2563eb);
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand-color, #2563eb), transparent 85%);
     }
 
     button {
-      padding: 10px 20px;
+      padding: var(--space-sm, 0.5lh) var(--space-md, 1lh);
       border: none;
-      border-radius: 4px;
+      border-radius: var(--radius-sm, 0.375rem);
       cursor: pointer;
-      font-size: 1rem;
-      transition: background-color 0.3s ease;
+      font-size: var(--font-size-body, clamp(0.9375rem, 1.15vw, 1rem));
+      font-weight: var(--font-weight-medium, 500);
+      transition: background-color var(--transition-base, 0.2s ease);
     }
 
     .btn-primary {
-      background: var(--link-color, #646cff);
-      color: white;
+      background: var(--brand-color, #2563eb);
+      color: var(--text-inverse, #ffffff);
+      box-shadow: 0 2px 4px color-mix(in srgb, var(--brand-color, #2563eb), transparent 75%);
     }
 
     .btn-primary:hover {
-      background: var(--link-hover-color, #535bf2);
+      background: color-mix(in srgb, var(--brand-color, #2563eb), black 15%);
     }
 
     .error-message {
-      color: red;
-      margin-bottom: 10px;
+      color: var(--accent-warm, #f59e0b);
+      margin-bottom: var(--space-sm, 0.5lh);
+      font-size: var(--font-size-small, clamp(0.8125rem, 1vw, 0.875rem));
     }
   `;
 

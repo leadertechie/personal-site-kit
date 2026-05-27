@@ -1,39 +1,68 @@
+/*
+ * Footer Component — Kumo-inspired footer with clean separation.
+ *
+ * Tokens are from theme.css @layer theme. Custom properties defined
+ * there penetrate Shadow DOM.
+ */
 import { css } from 'lit';
 
 export const footerStyles = css`
 :host {
+  /* Layout */
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 1rem 2rem;
-  background: var(--background-color);
-  color: var(--text-color);
-  border-top: 1px solid var(--nav-link-hover-bg);
+
+  /* Box */
+  padding: var(--space-md, 1lh) var(--space-lg, 2lh);
+
+  /* Visual */
+  background: var(--bg-primary, #ffffff);
+  color: var(--text-primary, #0b1120);
+  border-top: 1px solid var(--border-subtle, #e5e7eb);
+
+  /* Misc */
   flex-wrap: wrap;
 }
 
 .footer-content {
+  /* Layout */
   display: flex;
   flex-direction: column;
   align-items: flex-start;
+
+  /* Typography */
+  font-size: var(--font-size-small, clamp(0.8125rem, 1vw, 0.875rem));
+  color: var(--text-secondary, #475569);
 }
 
 .links {
+  /* Layout */
   display: flex;
-  gap: 1rem;
-  margin-top: 0.5rem;
+  gap: var(--space-sm, 0.5lh);
+
+  /* Box */
+  margin-top: var(--space-2xs, 0.25lh);
 }
 
 .links a {
-  color: inherit;
+  /* Typography */
+  color: var(--link-color, #2563eb);
   text-decoration: none;
-  padding: 0.25rem 0.5rem;
-  border-radius: 4px;
-  transition: background-color 0.3s ease;
+  font-size: var(--font-size-small, clamp(0.8125rem, 1vw, 0.875rem));
+
+  /* Box */
+  padding: var(--space-3xs, 0.125lh) var(--space-2xs, 0.25lh);
+  border-radius: var(--radius-sm, 0.25rem);
+
+  /* Misc */
+  transition: background-color var(--transition-base, 0.2s ease),
+              color var(--transition-base, 0.2s ease);
 }
 
 .links a:hover {
-  background-color: rgba(0, 0, 0, 0.1);
+  background-color: var(--bg-accent, #eff6ff);
+  color: var(--link-hover, #1d4ed8);
 }
 
 @media (min-width: 768px) {

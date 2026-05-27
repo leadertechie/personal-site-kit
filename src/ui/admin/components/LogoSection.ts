@@ -39,10 +39,9 @@ export class AdminLogoSection extends AdminSection {
             <div class="mb-1">
               <strong>Current:</strong> logo.svg (${logo.size} bytes)
             </div>
-            <div style="background: #f0f0f0; padding: 10px; border-radius: 8px; margin-bottom: 10px; display: inline-block;">
-              <img src="${logoUrl}" alt="Current Logo" style="max-height: 100px; display: block;" />
+            <div class="logo-preview">
+              <img src="${logoUrl}" alt="Current Logo" class="logo-preview-img" />
             </div>
-            <br/>
             <button class="btn-danger" @click=${this.handleDelete}>Delete</button>
           </div>
         ` : ''}

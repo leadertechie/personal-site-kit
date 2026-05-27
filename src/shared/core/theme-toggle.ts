@@ -25,19 +25,20 @@ export class ThemeToggle extends HTMLElement {
             background: none;
             border: none;
             cursor: pointer;
-            font-size: 1.5rem;
-            padding: 0.5rem;
-            color: var(--text-color, #213547);
-            transition: color 0.3s ease;
+            font-size: var(--font-size-h3, clamp(1.15rem, 1.75vw, 1.375rem));
+            padding: var(--space-2xs, 0.25lh);
+            color: var(--text-primary, #0b1120);
+            transition: color var(--transition-base, 0.2s ease);
+            line-height: 1;
           }
           button:hover {
-            color: var(--primary-color, #747bff);
+            color: var(--brand-color, #2563eb);
           }
-          html[data-theme='dark'] button {
-            color: var(--dark-mode-text-color, rgba(255, 255, 255, 0.87));
+          [data-theme='dark'] button {
+            color: var(--text-primary, #f1f5f9);
           }
-          html[data-theme='dark'] button:hover {
-            color: var(--dark-mode-primary-color, #646cff);
+          [data-theme='dark'] button:hover {
+            color: var(--brand-color, #60a5fa);
           }
         </style>
         <button id="theme-toggle" aria-label="Toggle theme">

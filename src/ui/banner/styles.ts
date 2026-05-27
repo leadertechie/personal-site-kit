@@ -1,46 +1,80 @@
+/*
+ * Banner Component — Kumo-inspired header.
+ *
+ * Tokens are from theme.css @layer theme. Custom properties defined
+ * there penetrate Shadow DOM, so references like var(--brand-color)
+ * resolve without explicit fallback. Fallbacks are provided for the
+ * standalone (non-Toldby) case.
+ */
 import { css } from 'lit';
 
 export const bannerStyles = css`
 :host {
+  /* Layout */
   display: block;
+  position: relative;
+
+  /* Box */
   width: 100%;
   box-sizing: border-box;
-  font-family: Arial, sans-serif;
-  color: var(--text-color);
-  background-color: var(--background-color);
+
+  /* Typography */
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  color: var(--text-primary, #0b1120);
+  background-color: var(--bg-primary, #ffffff);
+
+  /* Misc */
+  border-bottom: 1px solid var(--border-subtle, #e5e7eb);
 }
 
 .banner,
 .banner-component {
+  /* Layout */
   display: flex;
   flex-direction: row;
   justify-content: space-between;
   align-items: center;
-  padding: 1rem 2rem;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  transition: background-color 0.3s, color 0.3s;
-  background-color: var(--background-color);
-  color: var(--text-color);
+
+  /* Box */
+  padding: var(--space-sm, 0.5lh) var(--space-lg, 2lh);
+
+  /* Visual */
+  background-color: var(--bg-primary, #ffffff);
+  color: var(--text-primary, #0b1120);
+
+  /* Misc */
+  transition: background-color var(--transition-slow, 0.3s ease),
+              color var(--transition-slow, 0.3s ease);
 }
 
 .header-content {
+  /* Layout */
   display: flex;
   align-items: center;
+
+  /* Box */
   margin-bottom: 0;
   margin-right: auto;
+  gap: var(--space-sm, 0.5lh);
 }
 
 .logo-link {
+  /* Layout */
   display: inline-flex;
   align-items: center;
+
+  /* Misc */
   text-decoration: none;
   cursor: pointer;
 }
 
 .logo {
-  height: 50px;
-  margin-right: 1rem;
+  /* Box */
+  height: 48px;
+  margin-right: var(--space-sm, 0.5lh);
   width: auto;
+
+  /* Misc */
   cursor: pointer;
 }
 
@@ -50,35 +84,52 @@ export const bannerStyles = css`
 }
 
 h1 {
+  /* Typography */
+  font-size: var(--font-size-h3, clamp(1.15rem, 1.75vw, 1.375rem));
+  font-weight: var(--font-weight-semibold, 600);
+  letter-spacing: -0.02em;
+  color: var(--text-primary, #0b1120);
+
+  /* Box */
   margin: 0;
-  font-size: 1.8em;
-  font-weight: 600;
-  color: var(--text-color);
 }
 
 .nav-and-theme {
+  /* Layout */
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: var(--space-md, 1lh);
 }
 
 nav {
+  /* Layout */
   display: flex;
   align-items: center;
-  padding: 0 1rem;
-  gap: 10px;
+
+  /* Box */
+  padding: 0 var(--space-md, 1lh);
+  gap: var(--space-2xs, 0.25lh);
 }
 
 nav a {
+  /* Typography */
   text-decoration: none;
-  color: var(--nav-link-color, #333);
-  padding: 0.5rem 1rem;
-  border-radius: 5px;
-  transition: background-color 0.3s ease, color 0.3s ease;
+  color: var(--link-color, #2563eb);
+  font-size: var(--font-size-body, clamp(0.9375rem, 1.15vw, 1rem));
+  font-weight: var(--font-weight-medium, 500);
+
+  /* Box */
+  padding: var(--space-2xs, 0.25lh) var(--space-sm, 0.5lh);
+  border-radius: var(--radius-sm, 0.375rem);
+
+  /* Misc */
+  transition: background-color var(--transition-base, 0.2s ease),
+              color var(--transition-base, 0.2s ease);
 }
 
 nav a:hover {
-  background-color: var(--nav-link-hover-bg, #e2e6ea);
+  background-color: var(--bg-accent, #eff6ff);
+  color: var(--link-hover, #1d4ed8);
   text-decoration: none;
 }
 
@@ -86,8 +137,8 @@ nav a:hover {
   .banner,
   .banner-component {
     flex-direction: column;
-    gap: 1rem;
-    padding: 1rem;
+    gap: var(--space-sm, 0.5lh);
+    padding: var(--space-sm, 0.5lh);
   }
   
   .header-content {
@@ -98,6 +149,7 @@ nav a:hover {
   nav {
     flex-wrap: wrap;
     justify-content: center;
+    gap: var(--space-3xs, 0.125lh);
   }
 }
 `;
