@@ -43,27 +43,27 @@ export class AdminStaticSection extends AdminSection {
         <p class="help-text">Manage your site's static details like title, footer links, etc.</p>
 
         <div class="mb-1">
-          <label style="display:block;margin-bottom:4px;font-weight:500">Site Title</label>
+          <label class="field-label">Site Title</label>
           <input type="text" id="siteTitle" .value=${this.localDetails?.siteTitle || ''} />
         </div>
 
         <div class="mb-1">
-          <label style="display:block;margin-bottom:4px;font-weight:500">Copyright Text</label>
+          <label class="field-label">Copyright Text</label>
           <input type="text" id="copyright" .value=${this.localDetails?.copyright || ''} />
         </div>
 
         <div class="mb-1">
-          <label style="display:block;margin-bottom:4px;font-weight:500">LinkedIn URL</label>
+          <label class="field-label">LinkedIn URL</label>
           <input type="text" id="linkedin" .value=${this.localDetails?.linkedin || ''} />
         </div>
 
         <div class="mb-1">
-          <label style="display:block;margin-bottom:4px;font-weight:500">GitHub URL</label>
+          <label class="field-label">GitHub URL</label>
           <input type="text" id="github" .value=${this.localDetails?.github || ''} />
         </div>
 
         <div class="mb-1">
-          <label style="display:block;margin-bottom:4px;font-weight:500">Email</label>
+          <label class="field-label">Email</label>
           <input type="text" id="email" .value=${this.localDetails?.email || ''} />
         </div>
 

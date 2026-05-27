@@ -40,15 +40,15 @@ export class AdminStoriesSection extends AdminSection {
 
         <h4>Upload New Story</h4>
         <div class="mb-1">
-          <label style="display:block;margin-bottom:4px;font-weight:500">Metadata (JSON)</label>
+          <label class="field-label">Metadata (JSON)</label>
           <input type="file" id="storyMetaFile" accept=".json" />
         </div>
         <div class="mb-1">
-          <label style="display:block;margin-bottom:4px;font-weight:500">Content (Markdown)</label>
+          <label class="field-label">Content (Markdown)</label>
           <input type="file" id="storyContentFile" accept=".md" />
         </div>
         <div class="mb-1">
-          <label style="display:block;margin-bottom:4px;font-weight:500">URL Slug</label>
+          <label class="field-label">URL Slug</label>
           <input type="text" id="storySlug" placeholder="Slug (e.g., my-story)" />
         </div>
         <button class="btn-primary" @click=${this.handleUpload}>Upload Story (JSON + MD)</button>
