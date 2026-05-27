@@ -66,7 +66,6 @@ export class Router {
   private setupEventListeners() {
     document.body.addEventListener('click', (event) => {
       const path = event.composedPath();
-      
       // Find the first anchor element in the composed path that has an href attribute.
       // Using tagName check (not instanceof HTMLAnchorElement) to also catch anchor
       // elements inside shadow DOM (e.g. logo link in <my-banner>'s shadow root),
