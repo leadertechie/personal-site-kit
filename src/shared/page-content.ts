@@ -189,7 +189,7 @@ export const generatePageContent = (
       canonicalUrl,
       content: mainContent
     };
-  } else if (pathname === "/about-me") {
+  } else if (pathname === "/about") {
     const apiBaseUrl = data?.apiUrl || "";
     const mainContent = `
     ${bannerTemplate}

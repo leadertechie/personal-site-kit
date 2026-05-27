@@ -254,7 +254,7 @@ export const generatePageContent = async (
 
   if (pathname === "/" || pathname === "") {
     return strategies.home();
-  } else if (pathname === "/about-me") {
+  } else if (pathname === "/about") {
     return strategies.about();
   } else if (pathname === "/blogs" || pathname === "/blogs/") {
     return strategies.blogsList();

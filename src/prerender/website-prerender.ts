@@ -25,7 +25,7 @@ export class WebsitePrerender {
       { link: '/', text: 'Home' },
       { link: '/blogs', text: 'Blogs' },
       { link: '/stories', text: 'Stories' },
-      { link: '/about-me', text: 'About Me' },
+      { link: '/about', text: 'About' },
     ];
     this.defaultFooterLinks = options.defaultFooterLinks || [
       { text: 'LinkedIn', link: 'https://linkedin.com/in/yourname' },
@@ -227,7 +227,7 @@ export class WebsitePrerender {
     }
 
     let hydrationScript = '';
-    if (url.pathname === '/about-me' || url.pathname === '/about-me/') {
+    if (url.pathname === '/about' || url.pathname === '/about/') {
       const aboutMeData = await this.fetchAboutMeData(apiUrl, env);
       if (aboutMeData) {
         hydrationScript = `<script>window.__HYDRATION_DATA__ = ${JSON.stringify(aboutMeData)};</script>`;

@@ -10,17 +10,18 @@ export class Router {
 
   constructor(private ui: WebsiteUI) {
     const store = ui.getStore();
-    const config = store.getConfig();
+    const storeConfig = store.getConfig();
+    const uiConfig = ui.getConfig();
     
-    // Default routes if not provided in bootstrap
-    this.routes = [
+    // Use routes from UIConfig if provided, otherwise fall back to defaults
+    this.routes = uiConfig.routes?.length ? uiConfig.routes : [
       { link: '/', text: 'Home' },
       { link: '/blogs', text: 'Blogs' },
       { link: '/stories', text: 'Stories' },
-      { link: '/about-me', text: 'About Me' },
+      { link: '/about', text: 'About' },
     ];
 
-    this.apiUrl = config.apiUrl;
+    this.apiUrl = storeConfig.apiUrl;
   }
 
   private get config() {
@@ -113,7 +114,7 @@ export class Router {
       case '/':
         await this.renderHomePage();
         break;
-      case '/about-me':
+      case '/about':
         this.renderAboutMePage();
         break;
       case '/blogs':
@@ -204,7 +205,7 @@ export class Router {
   }
 
   private renderAboutMePage() {
-    const pageContent = generatePageContent('/about-me', this.routes, this.footerLinks, { 
+    const pageContent = generatePageContent('/about', this.routes, this.footerLinks, { 
       siteTitle: this.siteTitle, copyright: this.copyright, apiUrl: this.apiUrl 
     });
     if (this.appElement) this.appElement.innerHTML = pageContent.content;
