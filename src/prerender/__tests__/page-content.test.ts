@@ -4,7 +4,7 @@ import { generatePageContent } from '../page-content';
 describe('generatePageContent', () => {
   const mockRoutes = [
     { link: '/', text: 'Home' },
-    { link: '/about-me', text: 'About' }
+    { link: '/about', text: 'About' }
   ];
   const mockFooterLinks = [
     { text: 'Link', link: '#' }
@@ -27,10 +27,10 @@ describe('generatePageContent', () => {
   });
 
   it('should generate about-me page content', async () => {
-    const result = await generatePageContent('/about-me', mockRoutes, mockFooterLinks, mockEnv);
+    const result = await generatePageContent('/about', mockRoutes, mockFooterLinks, mockEnv);
 
     expect(result.title).toContain('About');
-    expect(result.canonicalUrl).toBe('https://www.example.com/about-me');
+    expect(result.canonicalUrl).toBe('https://www.example.com/about');
     expect(result.content).toContain('<my-aboutme');
   });
 
