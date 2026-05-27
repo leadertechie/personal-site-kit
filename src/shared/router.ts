@@ -65,7 +65,7 @@ export class Router {
     document.body.addEventListener('click', (event) => {
       const path = event.composedPath();
       const target = path.find(
-        (el) => el instanceof HTMLElement && el.matches('a[data-route]')
+        (el) => el instanceof HTMLElement && (el.matches('a[data-route]') || el.closest('a[data-route]'))
       ) as HTMLElement | undefined;
       if (target) {
         event.preventDefault();
