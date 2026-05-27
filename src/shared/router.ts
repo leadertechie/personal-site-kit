@@ -52,6 +52,7 @@ export class Router {
   }
 
   public init(appElementId: string = 'app') {
+    console.log('[Router] Initializing');
     this.appElement = document.getElementById(appElementId);
     if (!this.appElement) {
       console.error(`App element with id ${appElementId} not found`);
@@ -77,8 +78,9 @@ export class Router {
           el.getAttribute('href') !== null
       );
       if (target) {
-        event.preventDefault();
         const route = target.getAttribute('href');
+        console.log(`[Router] navigating to ${route}`);
+        event.preventDefault();
         if (route && route !== window.location.pathname) {
           window.history.pushState({}, '', route);
           this.navigate(route);
